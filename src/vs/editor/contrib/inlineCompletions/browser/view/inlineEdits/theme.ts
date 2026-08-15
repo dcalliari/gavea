@@ -200,8 +200,6 @@ export function getEditorBackgroundColor(editorType: InlineCompletionEditorType)
 			color = editorBackground; break;
 		case InlineCompletionEditorType.DiffEditor:
 			color = editorBackground; break;
-		case InlineCompletionEditorType.Notebook:
-			color = 'notebook.cellEditorBackground'; break;
 		default:
 			assertNever(editorType, 'Not supported editor type yet');
 	}

@@ -632,7 +632,6 @@ export interface SnippetInfo {
 export enum InlineCompletionEditorType {
 	TextEditor = 'textEditor',
 	DiffEditor = 'diffEditor',
-	Notebook = 'notebook',
 }
 
 /**

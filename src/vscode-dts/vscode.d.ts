@@ -14446,7 +14446,7 @@ declare module 'vscode' {
 		 * 2. A string will be desugared to become the `language`-part of a {@linkcode DocumentFilter}, so `"fooLang"` is like `{ language: "fooLang" }`.
 		 * 3. A {@linkcode DocumentFilter} will be matched against the document by comparing its parts with the document. The following rules apply:
 		 *    1. When the `DocumentFilter` is empty (`{}`) the result is `0`
-		 *    2. When `scheme`, `language`, `pattern`, or `notebook` are defined but one doesn't match, the result is `0`
+		 *    2. When `scheme`, `language`, or `pattern` are defined but one doesn't match, the result is `0`
 		 *    3. Matching against `*` gives a score of `5`, matching via equality or via a glob-pattern gives a score of `10`
 		 *    4. The result is the maximum value of each match
 		 *
@@ -14468,15 +14468,7 @@ declare module 'vscode' {
 		 * match('javascript', doc); // 10;
 		 * match({ language: 'javascript', scheme: 'git' }, doc); // 10;
 		 * match('*', doc); // 5
-		 *
-		 * // notebook cell document
-		 * doc.uri; // `vscode-notebook-cell:///my/notebook.ipynb#gl65s2pmha`;
-		 * doc.languageId; // 'python'
-		 * match({ notebookType: 'jupyter-notebook' }, doc) // 10
-		 * match({ notebookType: 'fooNotebook', language: 'python' }, doc) // 0
-		 * match({ language: 'python' }, doc) // 10
-		 * match({ notebookType: '*' }, doc) // 5
-		 * ```
+		 *		 * ```
 		 *
 		 * @param selector A document selector.
 		 * @param document A text document.
@@ -17865,7 +17857,7 @@ declare module 'vscode' {
 		readonly group: TabGroup;
 
 		/**
-		 * Defines the structure of the tab i.e. text, notebook, custom, etc.
+		 * Defines the structure of the tab i.e. text, custom, webview, terminal, etc.
 		 * Resource and other useful properties are defined on the tab kind.
 		 */
 		readonly input: TabInputText | TabInputTextDiff | TabInputCustom | TabInputWebview | TabInputTerminal | unknown;

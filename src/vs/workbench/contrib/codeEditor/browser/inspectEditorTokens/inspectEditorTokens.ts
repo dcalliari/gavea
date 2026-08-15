@@ -29,7 +29,6 @@ import { ColorThemeData, TokenStyleDefinitions, TokenStyleDefinition, TextMateTh
 import { SemanticTokenRule, TokenStyleData, TokenStyle } from '../../../../../platform/theme/common/tokenClassificationRegistry.js';
 import { IConfigurationService } from '../../../../../platform/configuration/common/configuration.js';
 import { SEMANTIC_HIGHLIGHTING_SETTING_ID, IEditorSemanticHighlightingOptions } from '../../../../../editor/contrib/semanticTokens/common/semanticTokensConfig.js';
-import { Schemas } from '../../../../../base/common/network.js';
 import { ILanguageFeaturesService } from '../../../../../editor/common/services/languageFeatures.js';
 import type * as TreeSitter from '@vscode/tree-sitter-wasm';
 import { TreeSitterSyntaxTokenBackend } from '../../../../../editor/common/model/tokens/treeSitter/treeSitterSyntaxTokenBackend.js';
@@ -89,10 +88,6 @@ export class InspectEditorTokensController extends Disposable implements IEditor
 			return;
 		}
 		if (!this._editor.hasModel()) {
-			return;
-		}
-		if (this._editor.getModel().uri.scheme === Schemas.vscodeNotebookCell) {
-			// disable in notebooks
 			return;
 		}
 		this._widget = new InspectEditorTokensWidget(this._editor, this._textMateService, this._languageService, this._themeService, this._notificationService, this._configurationService, this._languageFeaturesService);

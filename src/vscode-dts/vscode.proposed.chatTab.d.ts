@@ -12,6 +12,6 @@ declare module 'vscode' {
 	}
 
 	export interface Tab {
-		readonly input: TabInputText | TabInputTextDiff | TabInputCustom | TabInputWebview | TabInputNotebook | TabInputNotebookDiff | TabInputTerminal | TabInputChat | unknown;
+		readonly input: TabInputText | TabInputTextDiff | TabInputCustom | TabInputWebview | TabInputTerminal | TabInputChat | unknown;
 	}
 }

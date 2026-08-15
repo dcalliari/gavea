@@ -188,19 +188,14 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 			},
 			'workbench.editor.languageDetectionHints': {
 				type: 'object',
-				default: { 'untitledEditors': true, 'notebookEditors': true },
+				default: { 'untitledEditors': true },
 				description: localize('workbench.editor.showLanguageDetectionHints', "When enabled, shows a status bar Quick Fix when the editor language doesn't match detected content language."),
 				additionalProperties: false,
 				properties: {
 					untitledEditors: {
 						type: 'boolean',
 						description: localize('workbench.editor.showLanguageDetectionHints.editors', "Show in untitled text editors"),
-					},
-					notebookEditors: {
-						type: 'boolean',
-						description: localize('workbench.editor.showLanguageDetectionHints.notebook', "Show in notebook editors"),
-					}
-				}
+					},				}
 			},
 			'workbench.editor.tabActionLocation': {
 				type: 'string',

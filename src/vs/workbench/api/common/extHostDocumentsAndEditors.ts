@@ -16,7 +16,6 @@ import { ExtHostTextEditor } from './extHostTextEditor.js';
 import * as typeConverters from './extHostTypeConverters.js';
 import { ILogService } from '../../../platform/log/common/log.js';
 import { ResourceMap } from '../../../base/common/map.js';
-import { Schemas } from '../../../base/common/network.js';
 import { Iterable } from '../../../base/common/iterator.js';
 import { Lazy } from '../../../base/common/lazy.js';
 
@@ -81,12 +80,8 @@ export class ExtHostDocumentsAndEditors implements ExtHostDocumentsAndEditorsSha
 				const resource = URI.revive(data.uri);
 				let ref = this._documents.get(resource);
 
-				// double check -> only notebook cell documents should be
-				// referenced/opened more than once...
 				if (ref) {
-					if (resource.scheme !== Schemas.vscodeNotebookCell && resource.scheme !== Schemas.vscodeInteractiveInput) {
-						throw new Error(`document '${resource} already exists!'`);
-					}
+					throw new Error(`document '${resource} already exists!'`);
 				}
 				if (!ref) {
 					ref = new Reference(new ExtHostDocumentData(
