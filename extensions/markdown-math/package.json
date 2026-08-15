@@ -68,19 +68,8 @@
         }
       }
     ],
-    "notebookRenderer": [
-      {
-        "id": "vscode.markdown-it-katex-extension",
-        "displayName": "Markdown it KaTeX renderer",
-        "entrypoint": {
-          "extends": "vscode.markdown-it-renderer",
-          "path": "./notebook-out/katex.js"
-        }
-      }
-    ],
     "markdown.markdownItPlugins": true,
     "markdown.previewStyles": [
-      "./notebook-out/katex.min.css",
       "./preview-styles/index.css"
     ],
     "configuration": [
@@ -106,13 +95,11 @@
     ]
   },
   "scripts": {
-    "compile": "npm run build-notebook",
-    "watch": "npm run build-notebook",
-    "build-notebook": "node ./esbuild.notebook.mts"
+    "compile": "gulp compile-extension:markdown-math",
+    "watch": "gulp watch-extension:markdown-math"
   },
   "devDependencies": {
-    "@types/markdown-it": "^0.0.0",
-    "@types/vscode-notebook-renderer": "^1.60.0"
+    "@types/markdown-it": "^0.0.0"
   },
   "repository": {
     "type": "git",
