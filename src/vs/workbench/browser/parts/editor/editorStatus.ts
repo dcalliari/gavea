@@ -1108,7 +1108,6 @@ export class ChangeLanguageAction extends Action2 {
 				weight: KeybindingWeight.WorkbenchContrib,
 				primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KeyK, KeyCode.KeyM)
 			},
-			precondition: ContextKeyExpr.not('notebookEditorFocused'),
 			metadata: {
 				description: localize('changeLanguageMode.description', "Change the language mode of the active text editor."),
 				args: [

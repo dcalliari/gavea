@@ -277,8 +277,6 @@ export const COLOR_THEME_LIGHT_INITIAL_COLORS = {
 	'menu.border': '#CECECE',
 	'menu.selectionBackground': '#005FB8',
 	'menu.selectionForeground': '#ffffff',
-	'notebook.cellBorderColor': '#E5E5E5',
-	'notebook.selectedCellBackground': '#C8DDF150',
 	'notificationCenterHeader.background': '#FFFFFF',
 	'notificationCenterHeader.foreground': '#3B3B3B',
 	'notifications.background': '#FFFFFF',

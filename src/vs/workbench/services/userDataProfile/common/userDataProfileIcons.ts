@@ -44,7 +44,6 @@ export const ICONS = [
 	Codicon.book,
 	Codicon.globe,
 	Codicon.database,
-	Codicon.notebook,
 	Codicon.robot,
 	Codicon.game,
 	Codicon.chip,

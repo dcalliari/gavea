@@ -131,8 +131,6 @@ export class SettingsEditor2 extends EditorPane {
 
 	private static SUGGESTIONS: string[] = [
 		`@${MODIFIED_SETTING_TAG}`,
-		'@tag:notebookLayout',
-		'@tag:notebookOutputLayout',
 		`@tag:${REQUIRE_TRUSTED_WORKSPACE_SETTING_TAG}`,
 		`@tag:${WORKSPACE_TRUST_SETTING_TAG}`,
 		'@tag:sync',
@@ -156,7 +154,6 @@ export class SettingsEditor2 extends EditorPane {
 		`@${FEATURE_SETTING_TAG}comments`,
 		`@${FEATURE_SETTING_TAG}remote`,
 		`@${FEATURE_SETTING_TAG}timeline`,
-		`@${FEATURE_SETTING_TAG}notebook`,
 		`@${FEATURE_SETTING_TAG}chat`,
 		`@${POLICY_SETTING_TAG}`
 	];

@@ -337,7 +337,7 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration)
 			},
 			[AutoRestartConfigurationKey]: {
 				type: 'boolean',
-				description: localize('autoRestart', "If activated, extensions will automatically restart following an update if the window is not in focus. There can be a data loss if you have open Notebooks or Custom Editors."),
+				description: localize('autoRestart', "If activated, extensions will automatically restart following an update if the window is not in focus. There can be a data loss if you have open Custom Editors."),
 				default: false,
 				included: product.quality !== 'stable'
 			},

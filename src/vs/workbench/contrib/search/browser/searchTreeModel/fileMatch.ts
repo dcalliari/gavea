@@ -356,7 +356,4 @@ export class FileMatchImpl extends Disposable implements ISearchTreeFileMatch {
 		return this.matches().every(match => match.isReadonly);
 	}
 
-	// #region strictly notebook methods
-
-	//#endregion
 }

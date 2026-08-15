@@ -377,7 +377,7 @@ export function createDisconnectMenuItemAction(action: MenuItemAction, disposabl
 		return undefined;
 	}
 
-	const dropdownAction = disposables.add(new Action('notebook.moreRunActions', localize('notebook.moreRunActionsLabel', "More..."), 'codicon-chevron-down', true));
+	const dropdownAction = disposables.add(new Action('debug.moreRunActions', localize('debug.moreRunActionsLabel', "More..."), 'codicon-chevron-down', true));
 	const item = instantiationService.createInstance(DropdownWithPrimaryActionViewItem,
 		action as MenuItemAction,
 		dropdownAction,

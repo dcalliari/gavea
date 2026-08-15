@@ -112,7 +112,7 @@ export const startEntries: GettingStartedStartEntryContent = [
 	{
 		id: 'welcome.showNewFileEntries',
 		title: localize('gettingStarted.newFile.title', "New File..."),
-		description: localize('gettingStarted.newFile.description', "Open a new untitled text file, notebook, or custom editor."),
+		description: localize('gettingStarted.newFile.description', "Open a new untitled text file or custom editor."),
 		icon: Codicon.newFile,
 		content: {
 			type: 'startEntry',
@@ -384,7 +384,7 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 				{
 					id: 'accessibilityHelp',
 					title: localize('gettingStarted.accessibilityHelp.title', "Use the accessibility help dialog to learn about features"),
-					description: localize('gettingStarted.accessibilityHelp.description.interpolated', "The accessibility help dialog provides information about what to expect from a feature and the commands/keybindings to operate them.\n With focus in an editor, terminal, notebook, chat response, comment, or debug console, the relevant dialog can be opened with the Open Accessibility Help command.\n{0}", Button(localize('openAccessibilityHelp', "Open Accessibility Help"), 'command:editor.action.accessibilityHelp')),
+					description: localize('gettingStarted.accessibilityHelp.description.interpolated', "The accessibility help dialog provides information about what to expect from a feature and the commands/keybindings to operate them.\n With focus in an editor, terminal, chat response, comment, or debug console, the relevant dialog can be opened with the Open Accessibility Help command.\n{0}", Button(localize('openAccessibilityHelp', "Open Accessibility Help"), 'command:editor.action.accessibilityHelp')),
 					media: {
 						type: 'markdown', path: 'empty'
 					}
@@ -392,7 +392,7 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 				{
 					id: 'accessibleView',
 					title: localize('gettingStarted.accessibleView.title', "Screen reader users can inspect content line by line, character by character in the accessible view."),
-					description: localize('gettingStarted.accessibleView.description.interpolated', "The accessible view is available for the terminal, hovers, notifications, comments, notebook output, chat responses, inline completions, and debug console output.\n With focus in any of those features, it can be opened with the Open Accessible View command.\n{0}", Button(localize('openAccessibleView', "Open Accessible View"), 'command:editor.action.accessibleView')),
+					description: localize('gettingStarted.accessibleView.description.interpolated', "The accessible view is available for the terminal, hovers, notifications, comments, chat responses, inline completions, and debug console output.\n With focus in any of those features, it can be opened with the Open Accessible View command.\n{0}", Button(localize('openAccessibleView', "Open Accessible View"), 'command:editor.action.accessibleView')),
 					media: {
 						type: 'markdown', path: 'empty'
 					}

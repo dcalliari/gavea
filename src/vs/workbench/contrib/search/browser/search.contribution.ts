@@ -280,11 +280,6 @@ configurationRegistry.registerConfiguration({
 			description: nls.localize('search.quickAccess.preserveInput', "Controls whether the last typed input to Quick Search should be restored when opening it the next time."),
 			default: false
 		},
-		'search.experimental.closedNotebookRichContentResults': {
-			type: 'boolean',
-			description: nls.localize('search.experimental.closedNotebookResults', "Show notebook editor rich content results for closed notebooks. Please refresh your search results after changing this setting."),
-			default: false
-		},
 		'search.experimental.useIgnoreFilesInFindFiles': {
 			type: 'boolean',
 			default: false,

@@ -452,9 +452,7 @@ export interface ISearchConfigurationProperties {
 		preserveInput: boolean;
 	};
 	defaultViewMode: ViewMode;
-	experimental: {
-		closedNotebookRichContentResults: boolean;
-	};
+	experimental: {};
 	searchView: {
 		semanticSearchBehavior: string;
 		keywordSuggestions: boolean;

@@ -110,15 +110,6 @@ class NewFileTemplatesManager extends Disposable {
 		qp.matchOnDescription = true;
 
 		const sortCategories = (a: NewFileItem, b: NewFileItem): number => {
-			const categoryPriority: Record<string, number> = { 'file': 1, 'notebook': 2 };
-			if (categoryPriority[a.group] && categoryPriority[b.group]) {
-				if (categoryPriority[a.group] !== categoryPriority[b.group]) {
-					return categoryPriority[b.group] - categoryPriority[a.group];
-				}
-			}
-			else if (categoryPriority[a.group]) { return 1; }
-			else if (categoryPriority[b.group]) { return -1; }
-
 			if (a.from === builtInSource) { return 1; }
 			if (b.from === builtInSource) { return -1; }
 
@@ -127,7 +118,6 @@ class NewFileTemplatesManager extends Disposable {
 
 		const displayCategory: Record<string, string> = {
 			'file': localize('file', "File"),
-			'notebook': localize('notebook', "Notebook"),
 		};
 
 		const refreshQp = (entries: NewFileItem[]) => {

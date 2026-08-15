@@ -378,12 +378,6 @@ export interface IImageVariableEntry extends IBaseChatRequestVariableEntry {
 	readonly mimeType?: string;
 }
 
-export interface INotebookOutputVariableEntry extends IBaseChatRequestVariableEntry {
-	readonly kind: 'notebookOutput';
-	readonly outputIndex?: number;
-	readonly mimeType?: string;
-}
-
 export interface IDiagnosticVariableEntryFilterData {
 	readonly owner?: string;
 	readonly problemMessage?: string;
@@ -725,7 +719,7 @@ export function chatReferenceVariableEntryFromDynamicValue(value: IChatReference
 export type IChatRequestVariableEntry = IGenericChatRequestVariableEntry | IChatRequestImplicitVariableEntry | IChatRequestPasteVariableEntry
 	| ISymbolVariableEntry | ICommandResultVariableEntry | IDiagnosticVariableEntry | IImageVariableEntry
 	| IChatRequestToolEntry | IChatRequestToolSetEntry
-	| IChatRequestDirectoryEntry | IChatRequestFileEntry | INotebookOutputVariableEntry | IElementVariableEntry
+	| IChatRequestDirectoryEntry | IChatRequestFileEntry | IElementVariableEntry
 	| IPromptFileVariableEntry | IPromptTextVariableEntry
 	| ISCMHistoryItemVariableEntry | ISCMHistoryItemChangeVariableEntry | ISCMHistoryItemChangeRangeVariableEntry | ITerminalVariableEntry
 	| IChatRequestStringVariableEntry | IChatRequestWorkspaceVariableEntry | IDebugVariableEntry | IAgentFeedbackVariableEntry
@@ -889,10 +883,6 @@ export function getExplicitFileOrImageAttachmentSummary(entries: readonly IChatR
 	return fileOrImageEntries.length === 1
 		? localize('chat.attachmentSummary.file.one', "Attached 1 file")
 		: localize('chat.attachmentSummary.file.many', "Attached {0} files", fileOrImageEntries.length);
-}
-
-export function isNotebookOutputVariableEntry(obj: IChatRequestVariableEntry): obj is INotebookOutputVariableEntry {
-	return obj.kind === 'notebookOutput';
 }
 
 export function isElementVariableEntry(obj: IChatRequestVariableEntry): obj is IElementVariableEntry {

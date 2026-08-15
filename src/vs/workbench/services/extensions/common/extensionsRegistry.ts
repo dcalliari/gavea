@@ -355,19 +355,9 @@ export const schema: IJSONSchema = {
 						description: nls.localize('vscode.extension.activationEvents.onCustomEditor', 'An activation event emitted whenever the specified custom editor becomes visible.'),
 					},
 					{
-						label: 'onNotebook',
-						body: 'onNotebook:${1:type}',
-						description: nls.localize('vscode.extension.activationEvents.onNotebook', 'An activation event emitted whenever the specified notebook document is opened.'),
-					},
-					{
 						label: 'onAuthenticationRequest',
 						body: 'onAuthenticationRequest:${11:authenticationProviderId}',
 						description: nls.localize('vscode.extension.activationEvents.onAuthenticationRequest', 'An activation event emitted whenever sessions are requested from the specified authentication provider.')
-					},
-					{
-						label: 'onRenderer',
-						description: nls.localize('vscode.extension.activationEvents.onRenderer', 'An activation event emitted whenever a notebook output renderer is used.'),
-						body: 'onRenderer:${11:rendererId}'
 					},
 					{
 						label: 'onTerminalProfile',

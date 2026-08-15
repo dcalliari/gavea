@@ -70,12 +70,6 @@
 				<rect x="278" y="230" width="44" height="44" fill="url(#pattern4)" />
 			</g>
 		</a>
-		<a xlink:href="command:workbench.extensions.search?%22@id:ms-vscode.vscode-github-issue-notebooks%22">
-			<g filter="url(#filter5_d_703:9950)">
-				<rect x="60" y="320" width="48" height="48" rx="4" fill="white" />
-				<rect x="64" y="324" width="40" height="40" fill="url(#pattern5)" />
-			</g>
-		</a>
 		<a xlink:href="command:workbench.extensions.search?%22@id:vsls-contrib.gistfs%22">
 			<g filter="url(#filter6_d_703:9950)">
 				<rect x="412" y="196" width="48" height="48" rx="4" fill="white" />

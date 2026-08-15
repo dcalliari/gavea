@@ -29,7 +29,6 @@ export interface ILanguageDetectionService {
 
 export type LanguageDetectionHintConfig = {
 	untitledEditors: boolean;
-	notebookEditors: boolean;
 };
 
 //#region Telemetry events

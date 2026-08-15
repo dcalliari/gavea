@@ -364,11 +364,6 @@ export const tocData: ITOCEntry<string> = {
 					settings: ['timeline.*']
 				},
 				{
-					id: 'features/notebook',
-					label: localize('notebook', 'Notebook'),
-					settings: ['notebook.*', 'interactiveWindow.*']
-				},
-				{
 					id: 'features/mergeEditor',
 					label: localize('mergeEditor', 'Merge Editor'),
 					settings: ['mergeEditor.*']
