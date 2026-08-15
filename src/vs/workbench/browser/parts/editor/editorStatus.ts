@@ -49,7 +49,6 @@ import { IMarker, IMarkerService, MarkerSeverity, IMarkerData } from '../../../.
 import { ITelemetryService } from '../../../../platform/telemetry/common/telemetry.js';
 import { SideBySideEditorInput } from '../../../common/editor/sideBySideEditorInput.js';
 import { AutomaticLanguageDetectionLikelyWrongClassification, AutomaticLanguageDetectionLikelyWrongId, IAutomaticLanguageDetectionLikelyWrongData, ILanguageDetectionService } from '../../../services/languageDetection/common/languageDetectionWorkerService.js';
-import { ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';
 import { Action2 } from '../../../../platform/actions/common/actions.js';
 import { ServicesAccessor } from '../../../../editor/browser/editorExtensions.js';
 import { KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';

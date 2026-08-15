@@ -5,7 +5,7 @@
 
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { HierarchicalKind } from '../../../../base/common/hierarchicalKind.js';
-import { IJSONSchema } from '../../../../base/common/jsonSchema.js';
+import { IJSONSchema, IJSONSchemaMap } from '../../../../base/common/jsonSchema.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { editorConfigurationBaseNode } from '../../../../editor/common/config/editorConfigurationSchema.js';
 import { ILanguageFeaturesService } from '../../../../editor/common/services/languageFeatures.js';
