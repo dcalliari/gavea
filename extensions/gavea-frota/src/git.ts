@@ -36,6 +36,7 @@ export async function readGitRepository(repositoryPath: string): Promise<GitRepo
 		};
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		return { path: repositoryPath, name, error: message.split('\n')[0] };
+		const stderr = typeof error === 'object' && error !== null && 'stderr' in error && typeof error.stderr === 'string' ? error.stderr : '';
+		return { path: repositoryPath, name, error: (stderr || message).trim().split('\n')[0] };
 	}
 }
