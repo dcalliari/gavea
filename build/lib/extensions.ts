@@ -68,7 +68,7 @@ function fromLocal(extensionPath: string, forWeb: boolean, _disableMangle: boole
 
 	let hasEsbuild = fs.existsSync(path.join(extensionPath, esbuildConfigFileName));
 
-	// Fallback: check for .esbuild.mts/.esbuild.ts (used by extensions with their own build system, e.g. copilot)
+	// Fallback: check for .esbuild.mts/.esbuild.ts (used by extensions with their own build system)
 	if (!hasEsbuild && !forWeb) {
 		for (const fallback of ['.esbuild.mts', '.esbuild.ts']) {
 			if (fs.existsSync(path.join(extensionPath, fallback))) {
@@ -316,7 +316,6 @@ const nativeExtensions = [
 ];
 
 const excludedExtensions = [
-	'copilot',
 	'vscode-api-tests',
 	'vscode-colorize-tests',
 	'vscode-colorize-perf-tests',
@@ -327,10 +326,7 @@ const excludedExtensions = [
 
 const marketplaceWebExtensionsExclude = new Set([
 	'ms-vscode.node-debug',
-	'ms-vscode.node-debug2',
-	'ms-vscode.js-debug-companion',
-	'ms-vscode.js-debug',
-	'ms-vscode.vscode-js-profile-table'
+	'ms-vscode.node-debug2'
 ]);
 
 const productJson = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../../product.json'), 'utf8'));
@@ -463,34 +459,6 @@ function doPackageLocalExtensionsStream(forWeb: boolean, disableMangle: boolean,
 			.pipe(util2.setExecutableBit(['**/*.sh']))
 	);
 }
-
-/**
- * Package the built-in copilot extension specifically.
- * This is used by non-CI local builds where copilot is not downloaded as a VSIX
- * but must be compiled from source and included in the build.
- */
-export function packageCopilotExtensionStream(disableMangle: boolean): Stream {
-	const extensionPath = path.join(root, 'extensions', 'copilot');
-	if (!fs.existsSync(extensionPath)) {
-		return es.readArray([]);
-	}
-
-	const localExtensionsStream = minifyExtensionResources(
-		fromLocal(extensionPath, false, disableMangle)
-			.pipe(rename(p => p.dirname = `extensions/copilot/${p.dirname}`))
-	);
-
-	const productionDependencies = getProductionDependencies('extensions/copilot');
-	const dependenciesSrc = productionDependencies.map(d => path.relative(root, d)).map(d => [`${d}/**`, `!${d}/**/{test,tests}/**`]).flat();
-
-	return es.merge(
-		localExtensionsStream,
-		gulp.src(dependenciesSrc, { base: '.' })
-			.pipe(util2.cleanNodeModules(path.join(root, 'build', '.moduleignore')))
-			.pipe(util2.cleanNodeModules(path.join(root, 'build', `.moduleignore.${process.platform}`)))
-	).pipe(util2.setExecutableBit(['**/*.sh']));
-}
-
 export function packageMarketplaceExtensionsStream(forWeb: boolean): Stream {
 	const marketplaceExtensionsDescriptions = [
 		...builtInExtensions.filter(({ name }) => (forWeb ? !marketplaceWebExtensionsExclude.has(name) : true)),
