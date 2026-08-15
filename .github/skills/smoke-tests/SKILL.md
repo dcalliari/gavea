@@ -54,10 +54,8 @@ This is a debugging aid, **not a permanent CI fixture**:
 
 Drop the loop next to the existing Electron smoke step, gated on the same condition, in the test step(s) for the platform(s) where the flake reproduces:
 
-**GitHub PR workflows** (run from source, no `--build`):
-- `.github/workflows/pr-linux-test.yml` (bash; sets `DISPLAY: ":10"`)
-- `.github/workflows/pr-darwin-test.yml` (bash; no `DISPLAY`)
-- `.github/workflows/pr-win32-test.yml` (PowerShell)
+**Gávea CI** runs focused Linux validation from source. Broader smoke test loops
+are local-only and should not be added to the CI workflow.
 
 ### Shape
 

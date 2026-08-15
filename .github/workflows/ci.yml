@@ -29,6 +29,9 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
+      - name: Install Gávea Frota dependencies
+        run: npm install --prefix extensions/gavea-frota --ignore-scripts
+
       - name: Typecheck client
         run: npm run typecheck-client
 

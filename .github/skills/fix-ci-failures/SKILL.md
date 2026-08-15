@@ -194,7 +194,7 @@ Before fixing, determine if the failure is caused by the PR changes or is a pre-
 
 ```bash
 # Check recent runs on main for the same workflow
-gh run list --branch main --workflow pr-linux-test.yml --limit 5 --json databaseId,conclusion,displayTitle
+gh run list --branch main --workflow ci.yml --limit 5 --json databaseId,conclusion,displayTitle
 ```
 
 ### Recognizing Infrastructure / Flaky Failures
