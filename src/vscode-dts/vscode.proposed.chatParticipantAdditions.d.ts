@@ -57,14 +57,6 @@ declare module 'vscode' {
 		constructor(uri: Uri, edits: TextEdit | TextEdit[]);
 	}
 
-	export class ChatResponseNotebookEditPart {
-		uri: Uri;
-		edits: NotebookEdit[];
-		isDone?: boolean;
-		constructor(uri: Uri, done: true);
-		constructor(uri: Uri, edits: NotebookEdit | NotebookEdit[]);
-	}
-
 	/**
 	 * Represents a file-level edit (creation, deletion, or rename).
 	 */
@@ -434,7 +426,6 @@ declare module 'vscode' {
 	export interface ExtendedChatResponseParts {
 		ChatResponsePart: ChatResponsePart;
 		ChatResponseTextEditPart: ChatResponseTextEditPart;
-		ChatResponseNotebookEditPart: ChatResponseNotebookEditPart;
 		ChatResponseWorkspaceEditPart: ChatResponseWorkspaceEditPart;
 		ChatResponseConfirmationPart: ChatResponseConfirmationPart;
 		ChatResponseCodeCitationPart: ChatResponseCodeCitationPart;
@@ -605,10 +596,6 @@ declare module 'vscode' {
 		textEdit(target: Uri, edits: TextEdit | TextEdit[]): void;
 
 		textEdit(target: Uri, isDone: true): void;
-
-		notebookEdit(target: Uri, edits: NotebookEdit | NotebookEdit[]): void;
-
-		notebookEdit(target: Uri, isDone: true): void;
 
 		/**
 		 * Push a workspace edit containing file-level operations (create, delete, rename).

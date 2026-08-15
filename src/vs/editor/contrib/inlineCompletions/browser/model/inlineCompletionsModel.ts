@@ -53,7 +53,6 @@ import { OffsetRange } from '../../../../common/core/ranges/offsetRange.js';
 import { URI } from '../../../../../base/common/uri.js';
 import { IDefaultAccountService } from '../../../../../platform/defaultAccount/common/defaultAccount.js';
 import { IDefaultAccount } from '../../../../../base/common/defaultAccount.js';
-import { Schemas } from '../../../../../base/common/network.js';
 import { getInlineCompletionsController } from '../controller/common.js';
 
 export class InlineCompletionsModel extends Disposable {
@@ -159,16 +158,13 @@ export class InlineCompletionsModel extends Disposable {
 		}));
 
 		{ // Determine editor type
-			const isNotebook = this.textModel.uri.scheme === Schemas.vscodeNotebookCell;
 			const [diffEditor] = this._codeEditorService.listDiffEditors()
 				.filter(d =>
 					d.getOriginalEditor().getId() === this._editor.getId() ||
 					d.getModifiedEditor().getId() === this._editor.getId());
 
 			this.isInDiffEditor = !!diffEditor;
-			this.editorType = isNotebook ? InlineCompletionEditorType.Notebook
-				: this.isInDiffEditor ? InlineCompletionEditorType.DiffEditor
-					: InlineCompletionEditorType.TextEditor;
+			this.editorType = this.isInDiffEditor ? InlineCompletionEditorType.DiffEditor : InlineCompletionEditorType.TextEditor;
 		}
 
 		this._register(recomputeInitiallyAndOnChange(this.state, (s) => {
