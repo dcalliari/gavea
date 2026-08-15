@@ -10,9 +10,23 @@ import * as os from 'os';
 import * as path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { readGitRepository } from '../git.ts';
+import { disambiguatedNames, readGitRepository } from '../git.ts';
 
 const execFileAsync = promisify(execFile);
+
+test('disambiguates duplicate repository names using the shortest path suffix', () => {
+	assert.deepStrictEqual(disambiguatedNames([
+		{ path: '/projects/gavea', name: 'gavea' },
+		{ path: '/.treehouse/1/gavea', name: 'gavea' }
+	]), ['gavea (projects)', 'gavea (1)']);
+});
+
+test('keeps non-duplicate repository names unchanged', () => {
+	assert.deepStrictEqual(disambiguatedNames([
+		{ path: '/projects/gavea', name: 'gavea' },
+		{ path: '/projects/livre', name: 'livre' }
+	]), ['gavea', 'livre']);
+});
 
 test('reads branch and dirty state', async () => {
 	const repository = await fs.mkdtemp(path.join(os.tmpdir(), 'gavea-git-'));

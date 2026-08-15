@@ -7,15 +7,15 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { readAgentStates, AgentState } from './firstmate';
-import { GitRepositoryState, readGitRepository } from './git';
+import { GitRepositoryState, disambiguatedNames, readGitRepository } from './git';
 
 interface FleetRepository extends GitRepositoryState {
 	readonly agent?: AgentState;
 }
 
 class RepositoryItem extends vscode.TreeItem {
-	constructor(readonly repository: FleetRepository) {
-		super(repository.name, vscode.TreeItemCollapsibleState.None);
+	constructor(readonly repository: FleetRepository, label = repository.name) {
+		super(label, vscode.TreeItemCollapsibleState.None);
 		this.description = repository.error
 			? repository.error
 			: `${repository.branch || 'HEAD'} · ${repository.changedFiles === 0 ? 'limpo' : `${repository.changedFiles} arquivo(s) alterado(s)`}${formatSync(repository)}`;
@@ -83,7 +83,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 				return state;
 			}
 		}));
-		provider.setItems(repositories.map(repository => new RepositoryItem(repository)));
+		const names = disambiguatedNames(repositories);
+		provider.setItems(repositories.map((repository, index) => new RepositoryItem(repository, names[index])));
 	};
 	context.subscriptions.push(vscode.window.registerTreeDataProvider('gavea.frota', provider));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.refresh', refresh));

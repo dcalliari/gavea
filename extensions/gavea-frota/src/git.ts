@@ -8,6 +8,30 @@ import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 
+export function disambiguatedNames(repositories: readonly Pick<GitRepositoryState, 'path' | 'name'>[]): string[] {
+	const counts = new Map<string, number>();
+	for (const repository of repositories) {
+		counts.set(repository.name, (counts.get(repository.name) || 0) + 1);
+	}
+	return repositories.map(repository => {
+		if (counts.get(repository.name) === 1) {
+			return repository.name;
+		}
+		const matching = repositories.filter(candidate => candidate.name === repository.name);
+		const parentComponents = repository.path.split(/[\\/]/).filter(Boolean).slice(0, -1);
+		for (let length = 1; length <= parentComponents.length; length++) {
+			const suffix = parentComponents.slice(-length).join('/');
+			if (matching.every(candidate => {
+				const candidateComponents = candidate.path.split(/[\\/]/).filter(Boolean).slice(0, -1);
+				return candidate === repository || candidateComponents.slice(-length).join('/') !== suffix;
+			})) {
+				return `${repository.name} (${suffix})`;
+			}
+		}
+		return `${repository.name} (${repository.path})`;
+	});
+}
+
 export interface GitRepositoryState {
 	readonly path: string;
 	readonly name: string;
