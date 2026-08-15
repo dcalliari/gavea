@@ -62,7 +62,6 @@ import { StatusBarColorProvider } from './statusbarColorProvider.js';
 import { SET_VARIABLE_ID, VIEW_MEMORY_ID, VariablesView } from './variablesView.js';
 import { ADD_WATCH_ID, ADD_WATCH_LABEL, REMOVE_WATCH_EXPRESSIONS_COMMAND_ID, REMOVE_WATCH_EXPRESSIONS_LABEL, WatchExpressionsView } from './watchExpressionsView.js';
 import { WelcomeView } from './welcomeView.js';
-import { DebugChatContextContribution } from './debugChatIntegration.js';
 
 // Register services
 import './debug.service.contribution.js';
