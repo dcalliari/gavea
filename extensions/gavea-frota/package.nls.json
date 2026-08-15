@@ -1,0 +1,11 @@
+{
+	"displayName": "Frota Gávea",
+	"description": "Visão dos repositórios e trabalhos de agente",
+	"config.repositories": "Caminhos absolutos dos repositórios da frota",
+	"config.firstmateHome": "Diretório local dos registros do firstmate",
+	"config.refreshInterval": "Intervalo de atualização da frota, em segundos",
+	"container.title": "Frota",
+	"view.title": "Frota",
+	"command.refresh": "Atualizar Frota",
+	"command.configure": "Configurar Repositórios da Frota"
+}

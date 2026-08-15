@@ -1,0 +1,47 @@
+{
+	"name": "gavea-frota",
+	"displayName": "%displayName%",
+	"description": "%description%",
+	"version": "0.1.0",
+	"publisher": "gavea",
+	"license": "MIT",
+	"engines": { "vscode": "^1.99.0" },
+	"activationEvents": ["onView:gavea.frota"],
+	"main": "./out/extension",
+	"contributes": {
+		"configuration": {
+			"title": "Gávea Fleet",
+			"properties": {
+				"gavea.frota.repositorios": {
+					"type": "array",
+					"default": [],
+					"items": { "type": "string" },
+					"description": "%config.repositories%"
+				},
+				"gavea.frota.firstmateHome": {
+					"type": "string",
+					"default": "~/dpe/firstmate",
+					"description": "%config.firstmateHome%"
+				},
+				"gavea.frota.intervaloAtualizacao": {
+					"type": "number",
+					"default": 10,
+					"minimum": 1,
+					"description": "%config.refreshInterval%"
+				}
+			}
+		},
+		"viewsContainers": { "activitybar": [{ "id": "gavea-frota", "title": "%container.title%", "icon": "$(repo)" }] },
+		"views": { "gavea-frota": [{ "id": "gavea.frota", "name": "%view.title%" }] },
+		"commands": [
+			{ "command": "gavea.frota.refresh", "title": "%command.refresh%", "icon": "$(refresh)" },
+			{ "command": "gavea.frota.configure", "title": "%command.configure%" }
+		],
+		"menus": {
+			"view/title": [{ "command": "gavea.frota.refresh", "when": "view == gavea.frota", "group": "navigation" }],
+			"commandPalette": [{ "command": "gavea.frota.refresh" }, { "command": "gavea.frota.configure" }]
+		}
+	},
+	"scripts": { "compile": "npx gulp compile-extension:gavea-frota", "test": "node --experimental-strip-types --test src/test/*.test.ts" },
+	"devDependencies": { "@types/node": "24.x" }
+}
