@@ -59,11 +59,6 @@ Drop the loop next to the existing Electron smoke step, gated on the same condit
 - `.github/workflows/pr-darwin-test.yml` (bash; no `DISPLAY`)
 - `.github/workflows/pr-win32-test.yml` (PowerShell)
 
-**Azure DevOps test steps** (run against the packaged build via `--build`):
-- `build/azure-pipelines/linux/steps/product-build-linux-test.yml`
-- `build/azure-pipelines/darwin/steps/product-build-darwin-test.yml`
-- `build/azure-pipelines/win32/steps/product-build-win32-test.yml`
-
 ### Shape
 
 Loop N iterations (e.g. 20) and abort on the first failing run. Give it a generous timeout — N sequential runs of a ~3-minute suite can take roughly an hour.
