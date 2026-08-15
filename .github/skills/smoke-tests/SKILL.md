@@ -121,7 +121,7 @@ az pipelines runs artifact download \
   --path ./logs
 ```
 
-For the VS Code build that is `--org https://dev.azure.com/monacotools --project Monaco`; see the `azure-pipelines` skill for finding the `<BUILD_ID>`.
+For builds managed outside GitHub, obtain the build ID from the CI system that produced the artifact.
 
 ### Inside the artifact
 
