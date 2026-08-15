@@ -13,6 +13,7 @@ import { observableValue } from '../../../../../../base/common/observable.js';
 import { ILocalizedString, localize, localize2 } from '../../../../../../nls.js';
 import { IInstantiationService } from '../../../../../../platform/instantiation/common/instantiation.js';
 import { WorkbenchObjectTree } from '../../../../../../platform/list/browser/listService.js';
+import { DebugExpressionRenderer } from '../../../../debug/browser/debugExpressionRenderer.js';
 import { INotebookVariableElement } from './notebookVariablesDataSource.js';
 
 const $ = dom.$;

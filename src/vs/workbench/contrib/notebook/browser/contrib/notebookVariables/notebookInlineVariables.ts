@@ -20,6 +20,7 @@ import { localize } from '../../../../../../nls.js';
 import { registerAction2 } from '../../../../../../platform/actions/common/actions.js';
 import { IConfigurationService } from '../../../../../../platform/configuration/common/configuration.js';
 import { ServicesAccessor } from '../../../../../../platform/instantiation/common/instantiation.js';
+import { createInlineValueDecoration } from '../../../../debug/browser/debugEditorContribution.js';
 import { IDebugService, State } from '../../../../debug/common/debug.js';
 import { NotebookSetting } from '../../../common/notebookCommon.js';
 import { ICellExecutionStateChangedEvent, INotebookExecutionStateService, NotebookExecutionType } from '../../../common/notebookExecutionStateService.js';
@@ -121,6 +122,7 @@ export class NotebookInlineVariablesController extends Disposable implements INo
 		const inlineDecorations: IModelDeltaDecoration[] = [];
 
 		if (hasInlineValueProvider) {
+			// use extension based provider, borrowed from https://github.com/microsoft/vscode/blob/main/src/vs/workbench/contrib/debug/browser/debugEditorContribution.ts#L679
 			const lastLine = model.getLineCount();
 			const lastColumn = model.getLineMaxColumn(lastLine);
 			const ctx: InlineValueContext = {
