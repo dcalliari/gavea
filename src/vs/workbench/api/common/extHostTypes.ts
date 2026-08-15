@@ -39,7 +39,6 @@ export {
 } from './extHostTypes/diagnostic.js';
 export { Location } from './extHostTypes/location.js';
 export { MarkdownString } from './extHostTypes/markdownString.js';
-export { NotebookCellData, NotebookCellKind, NotebookCellOutput, NotebookCellOutputItem, NotebookData, NotebookEdit, NotebookRange } from './extHostTypes/notebooks.js';
 export { Position } from './extHostTypes/position.js';
 export { Range } from './extHostTypes/range.js';
 export { Selection } from './extHostTypes/selection.js';

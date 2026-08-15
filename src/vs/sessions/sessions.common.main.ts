@@ -87,7 +87,6 @@ import '../workbench/services/textresourceProperties/common/textResourceProperti
 import '../workbench/services/textfile/common/textEditorService.js';
 import '../workbench/services/language/common/languageService.js';
 import '../workbench/services/model/common/modelService.js';
-import '../workbench/services/notebook/common/notebookDocumentService.js';
 import '../workbench/services/commands/common/commandService.js';
 import '../workbench/services/themes/browser/workbenchThemeService.js';
 import '../workbench/services/label/common/labelService.js';
@@ -213,9 +212,6 @@ import '../workbench/contrib/preferences/browser/preferencesSearch.js';
 // Performance
 import '../workbench/contrib/performance/browser/performance.contribution.js';
 
-// Notebook
-import '../workbench/contrib/notebook/browser/notebook.contribution.js';
-
 // Speech
 import '../workbench/contrib/speech/browser/speech.contribution.js';
 
@@ -232,12 +228,6 @@ import '../workbench/contrib/imageCarousel/browser/imageCarousel.contribution.js
 // Voice Mode (voice UI actions, settings and context keys)
 import '../workbench/contrib/agentsVoice/browser/agentsVoice.contribution.js';
 import './contrib/chat/browser/voiceBridge.contribution.js';
-
-// Interactive
-import '../workbench/contrib/interactive/browser/interactive.contribution.js';
-
-// repl
-import '../workbench/contrib/replNotebook/browser/repl.contribution.js';
 
 // Testing (service)
 import { NullTestProfileService, NullTestResultService, NullTestService } from '../workbench/contrib/testing/common/nullTestingService.js';

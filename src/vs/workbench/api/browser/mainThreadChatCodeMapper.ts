@@ -9,7 +9,6 @@ import { TextEdit } from '../../../editor/common/languages.js';
 import { ICodeMapperProvider, ICodeMapperRequest, ICodeMapperResponse, ICodeMapperService } from '../../contrib/chat/common/editing/chatCodeMapperService.js';
 import { extHostNamedCustomer, IExtHostContext } from '../../services/extensions/common/extHostCustomers.js';
 import { ExtHostCodeMapperShape, ExtHostContext, ICodeMapperProgressDto, ICodeMapperRequestDto, MainContext, MainThreadCodeMapperShape } from '../common/extHost.protocol.js';
-import { NotebookDto } from './mainThreadNotebookDto.js';
 
 @extHostNamedCustomer(MainContext.MainThreadCodeMapper)
 export class MainThreadChatCodemapper extends Disposable implements MainThreadCodeMapperShape {
@@ -66,8 +65,6 @@ export class MainThreadChatCodemapper extends Disposable implements MainThreadCo
 				response.textEdit(resource, []);
 			} else if (edits.every(TextEdit.isTextEdit)) {
 				response.textEdit(resource, edits);
-			} else {
-				response.notebookEdit(resource, edits.map(NotebookDto.fromCellEditOperationDto));
 			}
 		}
 		return Promise.resolve();
