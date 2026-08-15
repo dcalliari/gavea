@@ -34,6 +34,7 @@ import './mainThreadDocuments.js';
 import './mainThreadDocumentsAndEditors.js';
 import './mainThreadEditor.js';
 import './mainThreadEditors.js';
+import './mainThreadEditorTabs.js';
 import './mainThreadErrors.js';
 import './mainThreadExtensionService.js';
 import './mainThreadFileSystem.js';
