@@ -88,7 +88,7 @@ import './mainThreadProfileContentHandlers.js';
 import './mainThreadAiRelatedInformation.js';
 import './mainThreadAiEmbeddingVector.js';
 import './mainThreadAiSettingsSearch.js';
-import './mainThreadMcp.js';
+import './mainThreadLanguageModels.js';
 import './mainThreadDataChannels.js';
 import './mainThreadMeteredConnection.js';
 import './mainThreadGitExtensionService.js';
