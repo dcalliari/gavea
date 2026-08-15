@@ -25,13 +25,11 @@ import { logBrowserOpen } from '../../../../platform/browserView/common/browserV
 // Register actions and browser features
 import './features/webContentsViewRendererFeature.js';
 import './features/browserNavigationFeatures.js';
-import './features/browserWelcomeFeature.js';
 import './features/browserFavoritesFeature.js';
 import './features/browserHistoryFeature.js';
 import './features/browserPermissionsFeature.js';
 import './features/browserDataStorageFeatures.js';
 import './features/browserDevToolsFeature.js';
-import './features/browserEditorChatFeatures.js';
 import './features/browserEditorErrorFeatures.js';
 import './features/browserEditorZoomFeature.js';
 import './features/browserEditorEmulationFeatures.js';
