@@ -24,7 +24,6 @@ import { IExtHostFileSystemInfo, ExtHostFileSystemInfo } from './extHostFileSyst
 import { IExtHostSecretState, ExtHostSecretState } from './extHostSecretState.js';
 import { ExtHostEditorTabs, IExtHostEditorTabs } from './extHostEditorTabs.js';
 import { ExtHostLoggerService } from './extHostLoggerService.js';
-import { ExtHostLanguageModels, IExtHostLanguageModels } from './extHostLanguageModels.js';
 import { ILoggerService } from '../../../platform/log/common/log.js';
 import { ExtHostVariableResolverProviderService, IExtHostVariableResolverProvider } from './extHostVariableResolverService.js';
 import { ExtHostLocalizationService, IExtHostLocalizationService } from './extHostLocalizationService.js';
@@ -41,7 +40,6 @@ import { ExtHostGitExtensionService, IExtHostGitExtensionService } from './extHo
 
 registerSingleton(IExtHostLocalizationService, ExtHostLocalizationService, InstantiationType.Delayed);
 registerSingleton(ILoggerService, ExtHostLoggerService, InstantiationType.Delayed);
-registerSingleton(IExtHostLanguageModels, ExtHostLanguageModels, InstantiationType.Eager);
 registerSingleton(IExtHostApiDeprecationService, ExtHostApiDeprecationService, InstantiationType.Delayed);
 registerSingleton(IExtHostCommands, ExtHostCommands, InstantiationType.Eager);
 registerSingleton(IExtHostProgress, ExtHostProgress, InstantiationType.Eager);
