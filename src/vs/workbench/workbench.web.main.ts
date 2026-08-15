@@ -147,7 +147,6 @@ import './contrib/performance/browser/performance.web.contribution.js';
 import './contrib/preferences/browser/keyboardLayoutPicker.js';
 
 // Debug
-import './contrib/debug/browser/extensionHostDebugService.js';
 
 // Welcome Banner
 import './contrib/welcomeBanner/browser/welcomeBanner.contribution.js';
