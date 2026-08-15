@@ -76,7 +76,6 @@ import './mainThreadNotebookKernels.js';
 import './mainThreadNotebookDocumentsAndEditors.js';
 import './mainThreadNotebookRenderers.js';
 import './mainThreadNotebookSaveParticipant.js';
-import './mainThreadInteractive.js';
 import './mainThreadTask.js';
 import './mainThreadLabelService.js';
 import './mainThreadTunnelService.js';
