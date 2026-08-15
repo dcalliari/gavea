@@ -95,19 +95,6 @@ export async function startClient(factory: LanguageClientConstructor, parser: IM
 
 	client.registerProposedFeatures();
 
-	const notebookFeature = client.getFeature(lsp.NotebookDocumentSyncRegistrationType.method);
-	if (notebookFeature !== undefined) {
-		notebookFeature.register({
-			id: String(Date.now()),
-			registerOptions: {
-				notebookSelector: [{
-					notebook: '*',
-					cells: [{ language: 'markdown' }]
-				}]
-			}
-		});
-	}
-
 	const workspace = new VsCodeMdWorkspace();
 
 	client.onRequest(proto.parse, async (e) => {

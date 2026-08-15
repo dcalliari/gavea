@@ -11,7 +11,6 @@ import { referenceGeneratedDepsByArch as debianGeneratedDeps } from './debian/de
 import { referenceGeneratedDepsByArch as rpmGeneratedDeps } from './rpm/dep-lists.ts';
 import { type DebianArchString, isDebianArchString } from './debian/types.ts';
 import { isRpmArchString, type RpmArchString } from './rpm/types.ts';
-import product from '../../product.json' with { type: 'json' };
 
 // A flag that can easily be toggled.
 // Make sure to compile the build directory after toggling the value.
