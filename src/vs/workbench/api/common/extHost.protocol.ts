@@ -4038,7 +4038,6 @@ export const MainContext = {
 	MainThreadStatusBar: createProxyIdentifier<MainThreadStatusBarShape>('MainThreadStatusBar'),
 	MainThreadSecretState: createProxyIdentifier<MainThreadSecretStateShape>('MainThreadSecretState'),
 	MainThreadStorage: createProxyIdentifier<MainThreadStorageShape>('MainThreadStorage'),
-	MainThreadSpeech: createProxyIdentifier<MainThreadSpeechShape>('MainThreadSpeechProvider'),
 	MainThreadTelemetry: createProxyIdentifier<MainThreadTelemetryShape>('MainThreadTelemetry'),
 	MainThreadMeteredConnection: createProxyIdentifier<MainThreadMeteredConnectionShape>('MainThreadMeteredConnection'),
 	MainThreadTerminalService: createProxyIdentifier<MainThreadTerminalServiceShape>('MainThreadTerminalService'),
