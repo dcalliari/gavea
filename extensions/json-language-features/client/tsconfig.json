@@ -8,6 +8,8 @@
 			"webworker"
 		],
 		"module": "Node16",
+		// Required because the fork removed the notebook API.
+		"skipLibCheck": true,
 		"types": [
 			"node"
 		],

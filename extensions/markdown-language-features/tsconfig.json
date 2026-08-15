@@ -6,6 +6,7 @@
 		"typeRoots": [
 			"./node_modules/@types"
 		],
+		// Required because the fork removed the notebook API.
 		"skipLibCheck": true
 	},
 	"include": [
