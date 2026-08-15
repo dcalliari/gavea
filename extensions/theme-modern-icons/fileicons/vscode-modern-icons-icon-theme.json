@@ -156,9 +156,6 @@
 		"_nlm": {
 			"iconPath": "./images/nlm.svg"
 		},
-		"_notebook": {
-			"iconPath": "./images/notebook.svg"
-		},
 		"_npm": {
 			"iconPath": "./images/npm.svg"
 		},
@@ -415,7 +412,6 @@
 		"mustache": "_mustache",
 		"stache": "_mustache",
 		"github-issues": "_github",
-		"ipynb": "_notebook",
 		"njk": "_nunjucks",
 		"nunjucks": "_nunjucks",
 		"nunjs": "_nunjucks",

@@ -34,7 +34,6 @@
           ".jslintrc",
           ".jsonld",
           ".geojson",
-          ".ipynb",
           ".vuerc"
         ],
         "filenames": [
