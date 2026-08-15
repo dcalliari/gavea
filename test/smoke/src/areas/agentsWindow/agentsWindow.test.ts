@@ -331,7 +331,6 @@ export function setup(logger: Logger) {
 				//     it resolves the SDK from the repo's `node_modules`
 				//     (`@openai/codex` is a devDependency).
 				//   - Publish builds: `product.agentSdks.codex` is stamped (only
-				//     when VSCODE_PUBLISH=true, see build/azure-pipelines/common/
 				//     agent-sdk-produce.yml) so the SDK is fetched from the CDN.
 				// In both cases an unavailable Codex is a regression — fail loudly.
 				// Otherwise (built non-publish CI, where the SDK is neither shipped

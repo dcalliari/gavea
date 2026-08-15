@@ -36,7 +36,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as tar from 'tar';
-import { findMissingNativeOptionalDep } from '../azure-pipelines/common/checkNativeOptionalDeps.ts';
+import { findMissingNativeOptionalDep } from './nativeOptionalDep.ts';
 import { getAgentDir, getAgentMeta, parseFlags, type Sdk, sha256OfFile } from './common.ts';
 
 const SCRIPT = 'package.ts';

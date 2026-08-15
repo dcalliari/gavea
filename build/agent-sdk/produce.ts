@@ -9,8 +9,7 @@
  * small JSON results file that the gulpfile-side `packageTask` reads to
  * stamp `product.json`'s `agentSdks` field.
  *
- * Run as a pipeline step BEFORE the gulp packaging step on the same agent
- * (via `build/azure-pipelines/common/agent-sdk-produce.yml`).
+ * Run before the gulp packaging step on the same agent.
  *
  * Behavior split by VSCODE_PUBLISH:
  *
