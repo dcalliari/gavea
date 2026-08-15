@@ -33,10 +33,6 @@
     "languageStatusText",
     "mcpServerDefinitions",
     "nativeWindowHandle",
-    "notebookDeprecated",
-    "notebookLiveShare",
-    "notebookMessaging",
-    "notebookMime",
     "portsAttributes",
     "quickPickSortByLabel",
     "resolvers",
@@ -236,36 +232,6 @@
       {
         "id": "provider",
         "label": "Provider"
-      }
-    ],
-    "notebooks": [
-      {
-        "type": "notebookCoreTest",
-        "displayName": "Notebook Core Test",
-        "selector": [
-          {
-            "filenamePattern": "*.vsctestnb",
-            "excludeFileNamePattern": ""
-          }
-        ]
-      },
-      {
-        "type": "notebook.nbdtest",
-        "displayName": "notebook.nbdtest",
-        "selector": [
-          {
-            "filenamePattern": "**/*.nbdtest"
-          }
-        ]
-      },
-      {
-        "type": "notebook.nbdserializer",
-        "displayName": "notebook.nbdserializer",
-        "selector": [
-          {
-            "filenamePattern": "**/*.nbdserializer"
-          }
-        ]
       }
     ],
     "statusBarItems": {

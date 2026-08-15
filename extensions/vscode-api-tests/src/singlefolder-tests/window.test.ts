@@ -5,7 +5,7 @@
 
 import * as assert from 'assert';
 import { join } from 'path';
-import { CancellationTokenSource, commands, MarkdownString, TabInputNotebook, Position, QuickPickItem, Selection, StatusBarAlignment, TextEditor, TextEditorSelectionChangeKind, TextEditorViewColumnChangeEvent, TabInputText, Uri, ViewColumn, window, workspace, TabInputTextDiff, UIKind, env } from 'vscode';
+import { CancellationTokenSource, commands, MarkdownString, Position, QuickPickItem, Selection, StatusBarAlignment, TextEditor, TextEditorSelectionChangeKind, TextEditorViewColumnChangeEvent, TabInputText, Uri, ViewColumn, window, workspace, TabInputTextDiff, UIKind, env } from 'vscode';
 import { assertNoRpc, closeAllEditors, createRandomFile, pathEquals } from '../utils';
 
 
@@ -447,46 +447,38 @@ suite('vscode API - window', () => {
 	(env.uiKind === UIKind.Web ? test.skip : test)('Tabs - Ensure tabs getter is correct', async function () {
 		// Reduce test timeout as this test should be quick, so even with 3 retries it will be under 60s.
 		this.timeout(10000);
-		// This test can be flaky because of opening a notebook
-		// Sometimes the webview doesn't resolve especially on windows so we will retry 3 times
 		this.retries(3);
-		const [docA, docB, docC, notebookDoc] = await Promise.all([
+		const [docA, docB, docC] = await Promise.all([
 			workspace.openTextDocument(await createRandomFile()),
 			workspace.openTextDocument(await createRandomFile()),
 			workspace.openTextDocument(await createRandomFile()),
-			workspace.openNotebookDocument('jupyter-notebook', undefined)
 		]);
 
 		await window.showTextDocument(docA, { viewColumn: ViewColumn.One, preview: false });
 		await window.showTextDocument(docB, { viewColumn: ViewColumn.Two, preview: false });
 		await window.showTextDocument(docC, { viewColumn: ViewColumn.Three, preview: false });
-		await window.showNotebookDocument(notebookDoc, { viewColumn: ViewColumn.One, preview: false });
 
 		const leftDiff = await createRandomFile();
 		const rightDiff = await createRandomFile();
 		await commands.executeCommand('vscode.diff', leftDiff, rightDiff, 'Diff', { viewColumn: ViewColumn.Three, preview: false });
 
 		const tabs = window.tabGroups.all.map(g => g.tabs).flat(1);
-		assert.strictEqual(tabs.length, 5);
+		assert.strictEqual(tabs.length, 4);
 
-		// All resources should match the text documents as they're the only tabs currently open
 		assert.ok(tabs[0].input instanceof TabInputText);
 		assert.strictEqual(tabs[0].input.uri.toString(), docA.uri.toString());
-		assert.ok(tabs[1].input instanceof TabInputNotebook);
-		assert.strictEqual(tabs[1].input.uri.toString(), notebookDoc.uri.toString());
+		assert.ok(tabs[1].input instanceof TabInputText);
+		assert.strictEqual(tabs[1].input.uri.toString(), docB.uri.toString());
 		assert.ok(tabs[2].input instanceof TabInputText);
-		assert.strictEqual(tabs[2].input.uri.toString(), docB.uri.toString());
-		assert.ok(tabs[3].input instanceof TabInputText);
-		assert.strictEqual(tabs[3].input.uri.toString(), docC.uri.toString());
+		assert.strictEqual(tabs[2].input.uri.toString(), docC.uri.toString());
 		// Diff editor and side by side editor report the right side as the resource
-		assert.ok(tabs[4].input instanceof TabInputTextDiff);
-		assert.strictEqual(tabs[4].input.modified.toString(), rightDiff.toString());
+		assert.ok(tabs[3].input instanceof TabInputTextDiff);
+		assert.strictEqual(tabs[3].input.modified.toString(), rightDiff.toString());
 
 		assert.strictEqual(tabs[0].group.viewColumn, ViewColumn.One);
-		assert.strictEqual(tabs[1].group.viewColumn, ViewColumn.One);
-		assert.strictEqual(tabs[2].group.viewColumn, ViewColumn.Two);
+		assert.strictEqual(tabs[1].group.viewColumn, ViewColumn.Two);
+		assert.strictEqual(tabs[2].group.viewColumn, ViewColumn.Three);
 		assert.strictEqual(tabs[3].group.viewColumn, ViewColumn.Three);
-		assert.strictEqual(tabs[4].group.viewColumn, ViewColumn.Three);
 	});
 
 	test('Tabs - ensure active tab is correct', async () => {
