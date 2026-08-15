@@ -42,6 +42,35 @@ export interface GitRepositoryState {
 	readonly error?: string;
 }
 
+export type RepositoryStatus = 'error' | 'working' | 'changed' | 'clean';
+
+export function repositoryStatus(repository: GitRepositoryState, hasActiveAgent: boolean): RepositoryStatus {
+	if (repository.error) {
+		return 'error';
+	}
+	if (hasActiveAgent) {
+		return 'working';
+	}
+	if ((repository.changedFiles || 0) > 0) {
+		return 'changed';
+	}
+	return 'clean';
+}
+
+export interface FleetSummary {
+	readonly repositories: number;
+	readonly changed: number;
+	readonly activeAgents: number;
+}
+
+export function summarizeFleet(repositories: readonly GitRepositoryState[], activeAgentPaths: ReadonlySet<string>): FleetSummary {
+	return {
+		repositories: repositories.length,
+		changed: repositories.filter(repository => (repository.changedFiles || 0) > 0).length,
+		activeAgents: repositories.filter(repository => activeAgentPaths.has(repository.path)).length
+	};
+}
+
 export async function readGitRepository(repositoryPath: string): Promise<GitRepositoryState> {
 	const name = repositoryPath.split(/[\\/]/).pop() || repositoryPath;
 	try {

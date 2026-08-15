@@ -10,7 +10,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { disambiguatedNames, readGitRepository } from '../git.ts';
+import { disambiguatedNames, readGitRepository, repositoryStatus, summarizeFleet } from '../git.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -26,6 +26,20 @@ test('keeps non-duplicate repository names unchanged', () => {
 		{ path: '/projects/gavea', name: 'gavea' },
 		{ path: '/projects/livre', name: 'livre' }
 	]), ['gavea', 'livre']);
+});
+
+test('classifies repository states for the fleet signal', () => {
+	assert.strictEqual(repositoryStatus({ path: '/repo', name: 'repo', error: 'not found' }, false), 'error');
+	assert.strictEqual(repositoryStatus({ path: '/repo', name: 'repo', changedFiles: 0 }, true), 'working');
+	assert.strictEqual(repositoryStatus({ path: '/repo', name: 'repo', changedFiles: 2 }, false), 'changed');
+	assert.strictEqual(repositoryStatus({ path: '/repo', name: 'repo', changedFiles: 0 }, false), 'clean');
+});
+
+test('summarizes changed repositories and active agents', () => {
+	assert.deepStrictEqual(summarizeFleet([
+		{ path: '/one', name: 'one', changedFiles: 1 },
+		{ path: '/two', name: 'two', changedFiles: 0 }
+	], new Set(['/one'])), { repositories: 2, changed: 1, activeAgents: 1 });
 });
 
 test('reads branch and dirty state', async () => {
