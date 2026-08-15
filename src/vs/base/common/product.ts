@@ -226,9 +226,6 @@ export interface IProductConfiguration {
 	readonly serverApplicationName: string;
 	readonly serverDataFolderName?: string;
 
-	readonly tunnelApplicationName?: string;
-	readonly tunnelApplicationConfig?: ITunnelApplicationConfig;
-
 	readonly npsSurveyUrl?: string;
 	readonly surveys?: readonly ISurveyData[];
 
@@ -313,12 +310,6 @@ export interface IProductOnboardingTheme {
 	readonly label: string;
 	readonly themeId: string;
 	readonly type: 'dark' | 'light' | 'hcDark' | 'hcLight';
-}
-
-export interface ITunnelApplicationConfig {
-	authenticationProviders: IStringDictionary<{ scopes: string[] }>;
-	editorWebUrl: string;
-	extension: IRemoteExtensionTip;
 }
 
 export interface IExtensionRecommendations {

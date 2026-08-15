@@ -149,7 +149,7 @@ export class TunnelProcessCoordinator extends Disposable implements ITunnelProce
 		this._tunnelCli = tunnelCliFactory?.(() => { }) ?? new CodeTunnelCli({
 			appRoot: environmentService.appRoot,
 			isBuilt: environmentService.isBuilt,
-			tunnelApplicationName: productService.tunnelApplicationName,
+			tunnelApplicationName: undefined,
 			win32VersionedUpdate: !!productService.win32VersionedUpdate,
 		});
 	}
