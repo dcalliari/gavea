@@ -9,7 +9,6 @@ import { CommandManager } from './commands/commandManager';
 import { DocumentSelector } from './configuration/documentSelector';
 import * as fileSchemes from './configuration/fileSchemes';
 import { LanguageDescription } from './configuration/languageDescription';
-import { Schemes } from './configuration/schemes';
 import { DiagnosticKind } from './languageFeatures/diagnostics';
 import FileConfigurationManager from './languageFeatures/fileConfigurationManager';
 import { TelemetryReporter } from './logging/telemetry';
@@ -155,11 +154,6 @@ export default class LanguageProvider extends Disposable {
 			) {
 				return;
 			}
-		}
-
-		// Disable semantic errors in notebooks until we have better notebook support
-		if (diagnosticsKind === DiagnosticKind.Semantic && file.scheme === Schemes.notebookCell) {
-			return;
 		}
 
 		this.client.diagnosticsManager.updateDiagnostics(file, this._diagnosticLanguage, diagnosticsKind, diagnostics, ranges);
