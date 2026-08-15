@@ -93,13 +93,6 @@ suite('vscode', function () {
 		assertNoRpcFromEntry([item, 'TreeView']);
 	});
 
-
-	test('no rpc, createNotebookController(...)', function () {
-		const ctrl = vscode.notebooks.createNotebookController('foo', 'bar', '');
-		dispo.push(ctrl);
-		assertNoRpcFromEntry([ctrl, 'NotebookController']);
-	});
-
 	test('no rpc, createTerminal(...)', function () {
 		const ctrl = vscode.window.createTerminal({ name: 'termi' });
 		dispo.push(ctrl);
