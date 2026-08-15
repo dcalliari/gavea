@@ -9,7 +9,6 @@ export const Schemes = Object.freeze({
 	mailto: 'mailto',
 	vscode: 'vscode',
 	'vscode-insiders': 'vscode-insiders',
-	notebookCell: 'vscode-notebook-cell',
 });
 
 export function isOfScheme(scheme: string, link: string): boolean {

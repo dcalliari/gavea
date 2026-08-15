@@ -7,7 +7,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ServiceConfigurationProvider, SyntaxServerConfiguration, TsServerLogLevel, TypeScriptServiceConfiguration, areServiceConfigurationsEqual } from './configuration/configuration';
 import * as fileSchemes from './configuration/fileSchemes';
-import { Schemes } from './configuration/schemes';
 import { IExperimentationTelemetryReporter } from './experimentTelemetryReporter';
 import { DiagnosticKind, DiagnosticsManager } from './languageFeatures/diagnostics';
 import { Logger } from './logging/logger';
@@ -839,18 +838,6 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 		const roots = vscode.workspace.workspaceFolders ? Array.from(vscode.workspace.workspaceFolders) : undefined;
 		if (!roots?.length) {
 			return undefined;
-		}
-
-		// For notebook cells, we need to use the notebook document to look up the workspace
-		if (resource.scheme === Schemes.notebookCell) {
-			for (const notebook of vscode.workspace.notebookDocuments) {
-				for (const cell of notebook.getCells()) {
-					if (cell.document.uri.toString() === resource.toString()) {
-						resource = notebook.uri;
-						break;
-					}
-				}
-			}
 		}
 
 		// Find the highest level workspace folder that contains the file
