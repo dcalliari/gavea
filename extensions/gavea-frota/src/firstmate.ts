@@ -12,7 +12,7 @@ export interface AgentState {
 	readonly text: string;
 }
 
-const terminalStates = new Set(['done', 'failed', 'blocked', 'cancelled', 'stopped']);
+const terminalStates = new Set(['done', 'failed', 'cancelled', 'stopped']);
 
 export async function readAgentStates(firstmateHome: string): Promise<Map<string, AgentState>> {
 	const result = new Map<string, AgentState>();
