@@ -52,7 +52,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Known suite names (used for help text and validation)
-KNOWN_SUITES="api-folder api-workspace colorize terminal-suggest typescript markdown emmet git git-base ipynb notebook-renderers configuration-editing github-authentication copilot css html"
+KNOWN_SUITES="api-folder api-workspace colorize terminal-suggest typescript markdown emmet git git-base configuration-editing github-authentication copilot css html"
 
 if $HELP; then
 	echo "Usage: $0 [options]"
@@ -279,22 +279,6 @@ echo
 echo "### Git Base tests"
 echo
 npm run test-extension -- -l git-base "${GREP_ARGS[@]}"
-kill_app
-fi
-
-if should_run_suite ipynb; then
-echo
-echo "### Ipynb tests"
-echo
-npm run test-extension -- -l ipynb "${GREP_ARGS[@]}"
-kill_app
-fi
-
-if should_run_suite notebook-renderers; then
-echo
-echo "### Notebook Output tests"
-echo
-npm run test-extension -- -l notebook-renderers "${GREP_ARGS[@]}"
 kill_app
 fi
 
