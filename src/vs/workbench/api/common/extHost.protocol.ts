@@ -64,7 +64,6 @@ import { ChatResponseClearToPreviousToolInvocationReason, IChatContentInlineRefe
 import { IChatSessionItem, IChatSessionProviderOptionGroup, IChatSessionProviderOptionItem } from '../../contrib/chat/common/chatSessionsService.js';
 import { IChatRequestVariableValue } from '../../contrib/chat/common/attachments/chatVariables.js';
 import { ChatAgentLocation } from '../../contrib/chat/common/constants.js';
-import { IChatMessage, IChatResponsePart, ILanguageModelChatInfoOptions, ILanguageModelChatMetadataAndIdentifier, ILanguageModelChatRequestOptions, ILanguageModelChatSelector } from '../../contrib/chat/common/languageModels.js';
 import { IPreparedToolInvocation, IStreamedToolInvocation, IToolInvocation, IToolInvocationPreparationContext, IToolInvocationStreamContext, IToolProgressStep, IToolResult, ToolDataSource } from '../../contrib/chat/common/tools/languageModelToolsService.js';
 import { IPromptFileContext, IPromptFileResource } from '../../contrib/chat/common/promptSyntax/service/promptsService.js';
 import { DebugConfigurationProviderTriggerKind, IAdapterDescriptor, IConfig, IDebugSessionReplMode, IDebugTestRunReference, IDebugVisualization, IDebugVisualizationContext, IDebugVisualizationTreeItem, MainThreadDebugVisualization } from '../../contrib/debug/common/debug.js';
@@ -1444,33 +1443,6 @@ export interface ExtHostBrowsersShape {
 	$onDidChangeBrowserTabState(browser: BrowserTabDto): void;
 	$onCDPSessionMessage(sessionId: string, message: CDPResponse | CDPEvent): void;
 	$onCDPSessionClosed(sessionId: string): void;
-}
-
-export interface MainThreadLanguageModelsShape extends IDisposable {
-	$registerLanguageModelProvider(vendor: string): void;
-	$onLMProviderChange(vendor: string): void;
-	$unregisterProvider(vendor: string): void;
-	$tryStartChatRequest(extension: ExtensionIdentifier, modelIdentifier: string, requestId: number, messages: SerializableObjectWithBuffers<IChatMessage[]>, options: {}, token: CancellationToken): Promise<void>;
-	$reportResponsePart(requestId: number, chunk: SerializableObjectWithBuffers<IChatResponsePart | IChatResponsePart[]>): Promise<void>;
-	$reportResponseDone(requestId: number, error: SerializedError | undefined): Promise<void>;
-	$selectChatModels(selector: ILanguageModelChatSelector): Promise<string[]>;
-	$countTokens(modelId: string, value: string | IChatMessage, token: CancellationToken): Promise<number>;
-	$cancelLanguageModelChatRequest(requestId: number): void;
-	$fileIsIgnored(uri: UriComponents, token: CancellationToken): Promise<boolean>;
-	$registerFileIgnoreProvider(handle: number): void;
-	$unregisterFileIgnoreProvider(handle: number): void;
-}
-
-export interface ExtHostLanguageModelsShape {
-	$provideLanguageModelChatInfo(vendor: string, options: ILanguageModelChatInfoOptions, token: CancellationToken): Promise<ILanguageModelChatMetadataAndIdentifier[]>;
-	$updateModelAccesslist(data: { from: ExtensionIdentifier; to: ExtensionIdentifier; enabled: boolean }[]): void;
-	$onChatModelsChange(): void;
-	$startChatRequest(modelId: string, requestId: number, from: ExtensionIdentifier | undefined, messages: SerializableObjectWithBuffers<IChatMessage[]>, options: ILanguageModelChatRequestOptions, token: CancellationToken): Promise<void>;
-	$acceptResponsePart(requestId: number, chunk: SerializableObjectWithBuffers<IChatResponsePart | IChatResponsePart[]>): Promise<void>;
-	$acceptResponseDone(requestId: number, error: SerializedError | undefined): Promise<void>;
-	$cancelLanguageModelChatRequest(requestId: number): void;
-	$provideTokenLength(modelId: string, value: string | IChatMessage, token: CancellationToken): Promise<number>;
-	$isFileIgnored(handle: number, uri: UriComponents, token: CancellationToken): Promise<boolean>;
 }
 
 export type IChatContextItemDto = Dto<IChatContextItem>;
@@ -4036,7 +4008,6 @@ export interface ExtHostGitExtensionShape {
 export const MainContext = {
 	MainThreadAuthentication: createProxyIdentifier<MainThreadAuthenticationShape>('MainThreadAuthentication'),
 	MainThreadBulkEdits: createProxyIdentifier<MainThreadBulkEditsShape>('MainThreadBulkEdits'),
-	MainThreadLanguageModels: createProxyIdentifier<MainThreadLanguageModelsShape>('MainThreadLanguageModels'),
 	MainThreadEmbeddings: createProxyIdentifier<MainThreadEmbeddingsShape>('MainThreadEmbeddings'),
 	MainThreadChatAgents2: createProxyIdentifier<MainThreadChatAgentsShape2>('MainThreadChatAgents2'),
 	MainThreadCodeMapper: createProxyIdentifier<MainThreadCodeMapperShape>('MainThreadCodeMapper'),
@@ -4176,9 +4147,7 @@ export const ExtHostContext = {
 	ExtHostNotebookKernels: createProxyIdentifier<ExtHostNotebookKernelsShape>('ExtHostNotebookKernels'),
 	ExtHostNotebookRenderers: createProxyIdentifier<ExtHostNotebookRenderersShape>('ExtHostNotebookRenderers'),
 	ExtHostNotebookDocumentSaveParticipant: createProxyIdentifier<ExtHostNotebookDocumentSaveParticipantShape>('ExtHostNotebookDocumentSaveParticipant'),
-	ExtHostChatAgents2: createProxyIdentifier<ExtHostChatAgentsShape2>('ExtHostChatAgents'),
 	ExtHostLanguageModelTools: createProxyIdentifier<ExtHostLanguageModelToolsShape>('ExtHostChatSkills'),
-	ExtHostChatProvider: createProxyIdentifier<ExtHostLanguageModelsShape>('ExtHostChatProvider'),
 	ExtHostChatContext: createProxyIdentifier<ExtHostChatContextShape>('ExtHostChatContext'),
 	ExtHostChatDebug: createProxyIdentifier<ExtHostChatDebugShape>('ExtHostChatDebug'),
 	ExtHostSpeech: createProxyIdentifier<ExtHostSpeechShape>('ExtHostSpeech'),
