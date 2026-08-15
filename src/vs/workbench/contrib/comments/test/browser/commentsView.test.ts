@@ -7,7 +7,7 @@ import assert from 'assert';
 import { workbenchInstantiationService } from '../../../../test/browser/workbenchTestServices.js';
 import { IRange, Range } from '../../../../../editor/common/core/range.js';
 import { CommentsPanel } from '../../browser/commentsView.js';
-import { CommentService, ICommentController, ICommentInfo, ICommentService, INotebookCommentInfo } from '../../browser/commentService.js';
+import { CommentService, ICommentController, ICommentInfo, ICommentService } from '../../browser/commentService.js';
 import { Comment, CommentInput, CommentReaction, CommentThread, CommentThreadCollapsibleState, CommentThreadState } from '../../../../../editor/common/languages.js';
 import { Emitter, Event } from '../../../../../base/common/event.js';
 import { TestInstantiationService } from '../../../../../platform/instantiation/test/common/instantiationServiceMock.js';
@@ -68,9 +68,6 @@ class TestCommentController implements ICommentController {
 		throw new Error('Method not implemented.');
 	}
 	getDocumentComments(resource: URI, token: CancellationToken): Promise<ICommentInfo> {
-		throw new Error('Method not implemented.');
-	}
-	getNotebookComments(resource: URI, token: CancellationToken): Promise<INotebookCommentInfo> {
 		throw new Error('Method not implemented.');
 	}
 	setActiveCommentAndThread(commentInfo: { thread: CommentThread; comment: Comment } | undefined): Promise<void> {

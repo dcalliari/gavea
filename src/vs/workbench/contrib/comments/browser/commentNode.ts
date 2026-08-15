@@ -37,7 +37,6 @@ import { TimestampWidget } from './timestamp.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { IMarkdownString } from '../../../../base/common/htmlContent.js';
 import { IRange } from '../../../../editor/common/core/range.js';
-import { ICellRange } from '../../notebook/common/notebookRange.js';
 import { CommentMenus } from './commentMenus.js';
 import { Scrollable, ScrollbarVisibility } from '../../../../base/common/scrollable.js';
 import { SmoothScrollableElement } from '../../../../base/browser/ui/scrollbar/scrollableElement.js';
@@ -58,7 +57,7 @@ class CommentsActionRunner extends ActionRunner {
 	}
 }
 
-export class CommentNode<T extends IRange | ICellRange> extends Disposable {
+export class CommentNode<T extends IRange> extends Disposable {
 	private _domNode: HTMLElement;
 	private _body: HTMLElement;
 	private _avatar: HTMLElement;

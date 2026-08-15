@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type * as vscode from 'vscode';
-import { asArray } from '../../../base/common/arrays.js';
 import { encodeBase64, VSBuffer } from '../../../base/common/buffer.js';
 import { illegalArgument, SerializedError } from '../../../base/common/errors.js';
 import { IRelativePattern } from '../../../base/common/glob.js';
@@ -39,7 +38,6 @@ export {
 } from './extHostTypes/diagnostic.js';
 export { Location } from './extHostTypes/location.js';
 export { MarkdownString } from './extHostTypes/markdownString.js';
-export { NotebookCellData, NotebookCellKind, NotebookCellOutput, NotebookCellOutputItem, NotebookData, NotebookEdit, NotebookRange } from './extHostTypes/notebooks.js';
 export { Position } from './extHostTypes/position.js';
 export { Range } from './extHostTypes/range.js';
 export { Selection } from './extHostTypes/selection.js';
@@ -2626,85 +2624,6 @@ export enum ColorThemeKind {
 }
 
 //#endregion Theming
-//#region Notebook
-
-export class CellErrorStackFrame {
-	/**
-	 * @param label The name of the stack frame
-	 * @param file The file URI of the stack frame
-	 * @param position The position of the stack frame within the file
-	 */
-	constructor(
-		public label: string,
-		public uri?: vscode.Uri,
-		public position?: Position,
-	) { }
-}
-
-export enum NotebookCellExecutionState {
-	Idle = 1,
-	Pending = 2,
-	Executing = 3,
-}
-
-export enum NotebookCellStatusBarAlignment {
-	Left = 1,
-	Right = 2
-}
-
-export enum NotebookEditorRevealType {
-	Default = 0,
-	InCenter = 1,
-	InCenterIfOutsideViewport = 2,
-	AtTop = 3
-}
-
-export class NotebookCellStatusBarItem {
-	constructor(
-		public text: string,
-		public alignment: NotebookCellStatusBarAlignment) { }
-}
-
-
-export enum NotebookControllerAffinity {
-	Default = 1,
-	Preferred = 2
-}
-
-export enum NotebookControllerAffinity2 {
-	Default = 1,
-	Preferred = 2,
-	Hidden = -1
-}
-
-export class NotebookRendererScript {
-
-	public provides: readonly string[];
-
-	constructor(
-		public uri: vscode.Uri,
-		provides: string | readonly string[] = []
-	) {
-		this.provides = asArray(provides);
-	}
-}
-
-export class NotebookKernelSourceAction {
-	description?: string;
-	detail?: string;
-	command?: vscode.Command;
-	constructor(
-		public label: string
-	) { }
-}
-
-export enum NotebookVariablesRequestKind {
-	Named = 1,
-	Indexed = 2
-}
-
-//#endregion
-
 //#region Timeline
 
 @es5ClassCompat
@@ -3028,25 +2947,9 @@ export class WebviewEditorTabInput {
 	constructor(readonly viewType: string) { }
 }
 
-export class NotebookEditorTabInput {
-	constructor(readonly uri: URI, readonly notebookType: string) { }
-}
-
-export class NotebookDiffEditorTabInput {
-	constructor(readonly original: URI, readonly modified: URI, readonly notebookType: string) { }
-}
-
 export class TerminalEditorTabInput {
 	constructor() { }
 }
-export class InteractiveWindowInput {
-	constructor(readonly uri: URI, readonly inputBoxUri: URI) { }
-}
-
-export class ChatEditorTabInput {
-	constructor() { }
-}
-
 export class TextMultiDiffTabInput {
 	constructor(readonly textDiffs: TextDiffTabInput[]) { }
 }
@@ -3497,22 +3400,6 @@ export class ChatResponseTextEditPart implements vscode.ChatResponseTextEditPart
 	}
 }
 
-export class ChatResponseNotebookEditPart implements vscode.ChatResponseNotebookEditPart {
-	uri: vscode.Uri;
-	edits: vscode.NotebookEdit[];
-	isDone?: boolean;
-	constructor(uri: vscode.Uri, editsOrDone: vscode.NotebookEdit | vscode.NotebookEdit[] | true) {
-		this.uri = uri;
-		if (editsOrDone === true) {
-			this.isDone = true;
-			this.edits = [];
-		} else {
-			this.edits = Array.isArray(editsOrDone) ? editsOrDone : [editsOrDone];
-
-		}
-	}
-}
-
 export class ChatResponseWorkspaceEditPart implements vscode.ChatResponseWorkspaceEditPart {
 	edits: vscode.ChatWorkspaceFileEdit[];
 	constructor(edits: vscode.ChatWorkspaceFileEdit[]) {
@@ -3601,7 +3488,6 @@ export class ChatResponseTurn2 implements vscode.ChatResponseTurn2 {
 export enum ChatLocation {
 	Panel = 1,
 	Terminal = 2,
-	Notebook = 3,
 	Editor = 4,
 }
 
@@ -3861,12 +3747,6 @@ export class ChatRequestEditorData implements vscode.ChatRequestEditorData {
 		readonly document: vscode.TextDocument,
 		readonly selection: vscode.Selection,
 		readonly wholeRange: vscode.Range,
-	) { }
-}
-
-export class ChatRequestNotebookData implements vscode.ChatRequestNotebookData {
-	constructor(
-		readonly cell: vscode.TextDocument
 	) { }
 }
 

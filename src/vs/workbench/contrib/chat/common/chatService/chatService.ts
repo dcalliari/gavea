@@ -20,7 +20,6 @@ import { Command, Location, TextEdit } from '../../../../../editor/common/langua
 import { FileType } from '../../../../../platform/files/common/files.js';
 import { createDecorator } from '../../../../../platform/instantiation/common/instantiation.js';
 import { IAutostartResult } from '../../../mcp/common/mcpTypes.js';
-import { ICellEditOperation } from '../../../notebook/common/notebookCommon.js';
 import { IWorkspaceSymbol } from '../../../search/common/search.js';
 import { IChatRequestVariableEntry } from '../attachments/chatVariableEntries.js';
 import { IChatRequestVariableValue } from '../attachments/chatVariables.js';
@@ -401,14 +400,6 @@ export interface IChatTextEdit {
 export interface IChatClearToPreviousToolInvocation {
 	kind: 'clearToPreviousToolInvocation';
 	reason: ChatResponseClearToPreviousToolInvocationReason;
-}
-
-export interface IChatNotebookEdit {
-	uri: URI;
-	edits: ICellEditOperation[];
-	kind: 'notebookEdit';
-	done?: boolean;
-	isExternalEdit?: boolean;
 }
 
 export interface IChatWorkspaceFileEdit {
@@ -1493,7 +1484,6 @@ export type IChatProgress =
 	| IChatWarningMessage
 	| IChatInfoMessage
 	| IChatTextEdit
-	| IChatNotebookEdit
 	| IChatWorkspaceEdit
 	| IChatExternalEdit
 	| IChatMoveMessage
@@ -1813,17 +1803,12 @@ export interface IChatEditorLocationData {
 	wholeRange: IRange;
 }
 
-export interface IChatNotebookLocationData {
-	type: ChatAgentLocation.Notebook;
-	sessionInputUri: URI;
-}
-
 export interface IChatTerminalLocationData {
 	type: ChatAgentLocation.Terminal;
 	// TBD
 }
 
-export type IChatLocationData = IChatEditorLocationData | IChatNotebookLocationData | IChatTerminalLocationData;
+export type IChatLocationData = IChatEditorLocationData | IChatTerminalLocationData;
 
 /**
  * The kind of queue request.

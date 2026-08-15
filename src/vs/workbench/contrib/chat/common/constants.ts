@@ -228,7 +228,7 @@ export enum ChatNotificationMode {
 	Always = 'always',
 }
 
-export type RawChatParticipantLocation = 'panel' | 'terminal' | 'notebook' | 'editing-session';
+export type RawChatParticipantLocation = 'panel' | 'terminal' | 'editing-session';
 
 export enum ChatAgentLocation {
 	/**
@@ -237,7 +237,6 @@ export enum ChatAgentLocation {
 	 */
 	Chat = 'panel',
 	Terminal = 'terminal',
-	Notebook = 'notebook',
 	/**
 	 * EditorInline means inline chat in a text editor.
 	 */
@@ -249,7 +248,6 @@ export namespace ChatAgentLocation {
 		switch (value) {
 			case 'panel': return ChatAgentLocation.Chat;
 			case 'terminal': return ChatAgentLocation.Terminal;
-			case 'notebook': return ChatAgentLocation.Notebook;
 			case 'editor': return ChatAgentLocation.EditorInline;
 		}
 		return ChatAgentLocation.Chat;

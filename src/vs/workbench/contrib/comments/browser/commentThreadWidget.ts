@@ -21,7 +21,6 @@ import { CommentThreadAdditionalActions } from './commentThreadAdditionalActions
 import { CommentContextKeys } from '../common/commentContextKeys.js';
 import { ICommentThreadWidget } from '../common/commentThreadWidget.js';
 import { IRange, Range } from '../../../../editor/common/core/range.js';
-import { ICellRange } from '../../notebook/common/notebookRange.js';
 import { FontInfo } from '../../../../editor/common/config/fontInfo.js';
 import { registerNavigableContainer } from '../../../browser/actions/widgetNavigationCommands.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
@@ -35,7 +34,7 @@ import { isCodeEditor } from '../../../../editor/browser/editorBrowser.js';
 
 export const COMMENTEDITOR_DECORATION_KEY = 'commenteditordecoration';
 
-export class CommentThreadWidget<T extends IRange | ICellRange = IRange> extends Disposable implements ICommentThreadWidget {
+export class CommentThreadWidget<T extends IRange = IRange> extends Disposable implements ICommentThreadWidget {
 	private _header!: CommentThreadHeader<T>;
 	private _body: CommentThreadBody<T>;
 	private _commentReply?: CommentReply<T>;

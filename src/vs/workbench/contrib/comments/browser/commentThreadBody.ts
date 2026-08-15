@@ -16,11 +16,10 @@ import { IInstantiationService } from '../../../../platform/instantiation/common
 import { URI } from '../../../../base/common/uri.js';
 import { ICommentThreadWidget } from '../common/commentThreadWidget.js';
 import { IMarkdownRendererExtraOptions } from '../../../../platform/markdown/browser/markdownRenderer.js';
-import { ICellRange } from '../../notebook/common/notebookRange.js';
 import { IRange } from '../../../../editor/common/core/range.js';
 import { LayoutableEditor } from './simpleCommentEditor.js';
 
-export class CommentThreadBody<T extends IRange | ICellRange = IRange> extends Disposable {
+export class CommentThreadBody<T extends IRange = IRange> extends Disposable {
 	private _commentsElement!: HTMLElement;
 	private _commentElements: CommentNode<T>[] = [];
 	private _resizeObserver: MutationObserver | null = null;
@@ -53,7 +52,6 @@ export class CommentThreadBody<T extends IRange | ICellRange = IRange> extends D
 		super();
 
 		this._register(dom.addDisposableListener(container, dom.EventType.FOCUS_IN, e => {
-			// TODO @rebornix, limit T to IRange | ICellRange
 			this.commentService.setActiveEditingCommentThread(this._commentThread);
 		}));
 	}
@@ -246,17 +244,12 @@ export class CommentThreadBody<T extends IRange | ICellRange = IRange> extends D
 	}
 
 	private _updateAriaLabel() {
-		if (this._commentThread.isDocumentCommentThread()) {
-			if (this._commentThread.range) {
-				this._commentsElement.ariaLabel = nls.localize('commentThreadAria.withRange', "Comment thread with {0} comments on lines {1} through {2}. {3}.",
-					this._commentThread.comments?.length, this._commentThread.range.startLineNumber, this._commentThread.range.endLineNumber,
-					this._commentThread.label);
-			} else {
-				this._commentsElement.ariaLabel = nls.localize('commentThreadAria.document', "Comment thread with {0} comments on the entire document. {1}.",
-					this._commentThread.comments?.length, this._commentThread.label);
-			}
+		if (this._commentThread.range) {
+			this._commentsElement.ariaLabel = nls.localize('commentThreadAria.withRange', "Comment thread with {0} comments on lines {1} through {2}. {3}.",
+				this._commentThread.comments?.length, this._commentThread.range.startLineNumber, this._commentThread.range.endLineNumber,
+				this._commentThread.label);
 		} else {
-			this._commentsElement.ariaLabel = nls.localize('commentThreadAria', "Comment thread with {0} comments. {1}.",
+			this._commentsElement.ariaLabel = nls.localize('commentThreadAria.document', "Comment thread with {0} comments on the entire document. {1}.",
 				this._commentThread.comments?.length, this._commentThread.label);
 		}
 	}

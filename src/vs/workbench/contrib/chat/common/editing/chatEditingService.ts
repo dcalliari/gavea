@@ -19,7 +19,6 @@ import { localize } from '../../../../../nls.js';
 import { RawContextKey } from '../../../../../platform/contextkey/common/contextkey.js';
 import { createDecorator } from '../../../../../platform/instantiation/common/instantiation.js';
 import { IEditorPane } from '../../../../common/editor.js';
-import { ICellEditOperation } from '../../../notebook/common/notebookCommon.js';
 import { IChatMultiDiffData, IChatMultiDiffDataSerialized, IChatProgress, IChatWorkspaceEdit } from '../chatService/chatService.js';
 import { ChatModel, IChatRequestDisablement, IChatResponseModel } from '../model/chatModel.js';
 import { IChatAgentResult } from '../participants/chatAgents.js';
@@ -69,8 +68,6 @@ export interface WorkingSetDisplayMetadata {
 
 export interface IStreamingEdits {
 	pushText(edits: TextEdit[], isLastEdits: boolean): void;
-	pushNotebookCellText(cell: URI, edits: TextEdit[], isLastEdits: boolean): void;
-	pushNotebook(edits: ICellEditOperation[], isLastEdits: boolean): void;
 	/** Marks edits as done, idempotent */
 	complete(): void;
 }
@@ -445,7 +442,6 @@ export interface IModifiedFileEntry {
 
 export interface IChatEditingSessionStream {
 	textEdits(resource: URI, textEdits: TextEdit[], isLastEdits: boolean, responseModel: IChatResponseModel): void;
-	notebookEdits(resource: URI, edits: ICellEditOperation[], isLastEdits: boolean, responseModel: IChatResponseModel): void;
 }
 
 export const enum ChatEditingSessionState {
