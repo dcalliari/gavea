@@ -27,7 +27,6 @@ import { CommentMenus } from './commentMenus.js';
 import { ICommentService } from './commentService.js';
 import { CommentContextKeys } from '../common/commentContextKeys.js';
 import { ICommentThreadWidget } from '../common/commentThreadWidget.js';
-import { ICellRange } from '../../notebook/common/notebookRange.js';
 import { LayoutableEditor, MIN_EDITOR_HEIGHT, SimpleCommentEditor, calculateEditorHeight } from './simpleCommentEditor.js';
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { IContextMenuService } from '../../../../platform/contextview/browser/contextView.js';
@@ -36,7 +35,7 @@ import { Position } from '../../../../editor/common/core/position.js';
 let INMEM_MODEL_ID = 0;
 export const COMMENTEDITOR_DECORATION_KEY = 'commenteditordecoration';
 
-export class CommentReply<T extends IRange | ICellRange> extends Disposable {
+export class CommentReply<T extends IRange> extends Disposable {
 	commentEditor: ICodeEditor;
 	private _container: HTMLElement;
 	private _form: HTMLElement;
@@ -144,7 +143,7 @@ export class CommentReply<T extends IRange | ICellRange> extends Disposable {
 		return false;
 	}
 
-	public updateCommentThread(commentThread: languages.CommentThread<IRange | ICellRange>) {
+	public updateCommentThread(commentThread: languages.CommentThread<IRange>) {
 		const isReplying = this.commentEditor.hasTextFocus();
 		const oldAndNewBothEmpty = !this._commentThread.comments?.length && !commentThread.comments?.length;
 

@@ -23,8 +23,7 @@ export class ExtHostBulkEdits {
 		this._proxy = extHostRpc.getProxy(MainContext.MainThreadBulkEdits);
 
 		this._versionInformationProvider = {
-			getTextDocumentVersion: uri => extHostDocumentsAndEditors.getDocument(uri)?.version,
-			getNotebookDocumentVersion: () => undefined
+			getTextDocumentVersion: uri => extHostDocumentsAndEditors.getDocument(uri)?.version
 		};
 	}
 

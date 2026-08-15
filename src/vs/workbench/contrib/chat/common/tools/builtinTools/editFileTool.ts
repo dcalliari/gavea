@@ -9,8 +9,6 @@ import { IDisposable } from '../../../../../../base/common/lifecycle.js';
 import { autorun } from '../../../../../../base/common/observable.js';
 import { isEqual } from '../../../../../../base/common/resources.js';
 import { URI, UriComponents } from '../../../../../../base/common/uri.js';
-import { CellUri } from '../../../../notebook/common/notebookCommon.js';
-import { INotebookService } from '../../../../notebook/common/notebookService.js';
 import { ICodeMapperService } from '../../editing/chatCodeMapperService.js';
 import { ChatModel } from '../../model/chatModel.js';
 import { IChatService } from '../../chatService/chatService.js';
@@ -36,7 +34,6 @@ export class EditTool implements IToolImpl {
 	constructor(
 		@IChatService private readonly chatService: IChatService,
 		@ICodeMapperService private readonly codeMapperService: ICodeMapperService,
-		@INotebookService private readonly notebookService: INotebookService,
 	) { }
 
 	async invoke(invocation: IToolInvocation, countTokens: CountTokensCallback, _progress: ToolProgress, token: CancellationToken): Promise<IToolResult> {
@@ -46,7 +43,7 @@ export class EditTool implements IToolImpl {
 
 		const parameters = invocation.parameters as EditToolParams;
 		const fileUri = URI.revive(parameters.uri);
-		const uri = CellUri.parse(fileUri)?.notebook || fileUri;
+		const uri = fileUri;
 
 		const model = this.chatService.getSession(invocation.context.sessionResource) as ChatModel;
 		const request = model.getRequests().at(-1)!;
@@ -65,19 +62,11 @@ export class EditTool implements IToolImpl {
 			content: new MarkdownString('\n````\n')
 		});
 		// Signal start.
-		if (this.notebookService.hasSupportedNotebooks(uri) && (this.notebookService.getNotebookTextModel(uri))) {
-			model.acceptResponseProgress(request, {
-				kind: 'notebookEdit',
-				edits: [],
-				uri
-			});
-		} else {
-			model.acceptResponseProgress(request, {
-				kind: 'textEdit',
-				edits: [],
-				uri
-			});
-		}
+		model.acceptResponseProgress(request, {
+			kind: 'textEdit',
+			edits: [],
+			uri
+		});
 
 		const editSession = model.editingSession;
 		if (!editSession) {
@@ -94,17 +83,10 @@ export class EditTool implements IToolImpl {
 			textEdit: (target, edits) => {
 				model.acceptResponseProgress(request, { kind: 'textEdit', uri: target, edits });
 			},
-			notebookEdit(target, edits) {
-				model.acceptResponseProgress(request, { kind: 'notebookEdit', uri: target, edits });
-			},
 		}, token);
 
 		// Signal end.
-		if (this.notebookService.hasSupportedNotebooks(uri) && (this.notebookService.getNotebookTextModel(uri))) {
-			model.acceptResponseProgress(request, { kind: 'notebookEdit', uri, edits: [], done: true });
-		} else {
-			model.acceptResponseProgress(request, { kind: 'textEdit', uri, edits: [], done: true });
-		}
+		model.acceptResponseProgress(request, { kind: 'textEdit', uri, edits: [], done: true });
 
 		if (result?.errorMessage) {
 			throw new Error(result.errorMessage);

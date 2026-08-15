@@ -14,11 +14,10 @@ import * as languages from '../../../../editor/common/languages.js';
 import { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
 import { CommentFormActions } from './commentFormActions.js';
 import { CommentMenus } from './commentMenus.js';
-import { ICellRange } from '../../notebook/common/notebookRange.js';
 import { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';
 import { IContextMenuService } from '../../../../platform/contextview/browser/contextView.js';
 
-export class CommentThreadAdditionalActions<T extends IRange | ICellRange> extends Disposable {
+export class CommentThreadAdditionalActions<T extends IRange> extends Disposable {
 	private _container: HTMLElement | null;
 	private _buttonBar: HTMLElement | null;
 	private _commentFormActions!: CommentFormActions;

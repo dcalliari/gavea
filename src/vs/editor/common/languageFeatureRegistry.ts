@@ -26,29 +26,16 @@ function isExclusive(selector: LanguageSelector): boolean {
 	}
 }
 
-export interface NotebookInfo {
-	readonly uri: URI;
-	readonly type: string;
-}
-
-export interface NotebookInfoResolver {
-	(uri: URI): NotebookInfo | undefined;
-}
-
 class MatchCandidate {
 	constructor(
 		readonly uri: URI,
 		readonly languageId: string,
-		readonly notebookUri: URI | undefined,
-		readonly notebookType: string | undefined,
 		readonly recursive: boolean,
 	) { }
 
 	equals(other: MatchCandidate): boolean {
-		return this.notebookType === other.notebookType
-			&& this.languageId === other.languageId
+		return this.languageId === other.languageId
 			&& this.uri.toString() === other.uri.toString()
-			&& this.notebookUri?.toString() === other.notebookUri?.toString()
 			&& this.recursive === other.recursive;
 	}
 }
@@ -61,7 +48,7 @@ export class LanguageFeatureRegistry<T> {
 	private readonly _onDidChange = new Emitter<number>();
 	get onDidChange() { return this._onDidChange.event; }
 
-	constructor(private readonly _notebookInfoResolver?: NotebookInfoResolver) { }
+
 
 	register(selector: LanguageSelector, provider: T): IDisposable {
 
@@ -162,13 +149,7 @@ export class LanguageFeatureRegistry<T> {
 
 	private _updateScores(model: ITextModel, recursive: boolean): void {
 
-		const notebookInfo = this._notebookInfoResolver?.(model.uri);
-
-		// use the uri (scheme, pattern) of the notebook info iff we have one
-		// otherwise it's the model's/document's uri
-		const candidate = notebookInfo
-			? new MatchCandidate(model.uri, model.getLanguageId(), notebookInfo.uri, notebookInfo.type, recursive)
-			: new MatchCandidate(model.uri, model.getLanguageId(), undefined, undefined, recursive);
+		const candidate = new MatchCandidate(model.uri, model.getLanguageId(), recursive);
 
 		if (this._lastCandidate?.equals(candidate)) {
 			// nothing has changed
@@ -178,7 +159,7 @@ export class LanguageFeatureRegistry<T> {
 		this._lastCandidate = candidate;
 
 		for (const entry of this._entries) {
-			entry._score = score(entry.selector, candidate.uri, candidate.languageId, shouldSynchronizeModel(model), candidate.notebookUri, candidate.notebookType);
+			entry._score = score(entry.selector, candidate.uri, candidate.languageId, shouldSynchronizeModel(model));
 
 			if (isExclusive(entry.selector) && entry._score > 0) {
 				if (recursive) {

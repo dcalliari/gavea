@@ -6,7 +6,7 @@
 import * as nls from '../../../../nls.js';
 import { URI } from '../../../../base/common/uri.js';
 import * as network from '../../../../base/common/network.js';
-import { Disposable, IReference } from '../../../../base/common/lifecycle.js';
+import { Disposable } from '../../../../base/common/lifecycle.js';
 import { IReplaceService } from './replace.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
 import { IModelService } from '../../../../editor/common/services/model.js';
@@ -27,10 +27,7 @@ import { ILabelService } from '../../../../platform/label/common/label.js';
 import { dirname } from '../../../../base/common/resources.js';
 import { Promises } from '../../../../base/common/async.js';
 import { SaveSourceRegistry } from '../../../common/editor.js';
-import { CellUri, IResolvedNotebookEditorModel } from '../../notebook/common/notebookCommon.js';
-import { INotebookEditorModelResolverService } from '../../notebook/common/notebookEditorModelResolverService.js';
 import { ISearchTreeFileMatch, isSearchTreeFileMatch, ISearchTreeMatch, FileMatchOrMatch, isSearchTreeMatch } from './searchTreeModel/searchTreeCommon.js';
-import { isIMatchInNotebook } from './notebookSearch/notebookSearchModelBase.js';
 
 const REPLACE_PREVIEW = 'replacePreview';
 
@@ -105,8 +102,7 @@ export class ReplaceService implements IReplaceService {
 		@IEditorService private readonly editorService: IEditorService,
 		@ITextModelService private readonly textModelResolverService: ITextModelService,
 		@IBulkEditService private readonly bulkEditorService: IBulkEditService,
-		@ILabelService private readonly labelService: ILabelService,
-		@INotebookEditorModelResolverService private readonly notebookEditorModelResolverService: INotebookEditorModelResolverService
+		@ILabelService private readonly labelService: ILabelService
 	) { }
 
 	replace(match: ISearchTreeMatch): Promise<any>;
@@ -116,23 +112,7 @@ export class ReplaceService implements IReplaceService {
 		const edits = this.createEdits(arg, resource);
 		await this.bulkEditorService.apply(edits, { progress });
 
-		const rawTextPromises = edits.map(async e => {
-			if (e.resource.scheme === network.Schemas.vscodeNotebookCell) {
-				const notebookResource = CellUri.parse(e.resource)?.notebook;
-				if (notebookResource) {
-					let ref: IReference<IResolvedNotebookEditorModel> | undefined;
-					try {
-						ref = await this.notebookEditorModelResolverService.resolve(notebookResource);
-						await ref.object.save({ source: ReplaceService.REPLACE_SAVE_SOURCE });
-					} finally {
-						ref?.dispose();
-					}
-				}
-				return;
-			} else {
-				return this.textFileService.files.get(e.resource)?.save({ source: ReplaceService.REPLACE_SAVE_SOURCE });
-			}
-		});
+		const rawTextPromises = edits.map(e => this.textFileService.files.get(e.resource)?.save({ source: ReplaceService.REPLACE_SAVE_SOURCE }) ?? Promise.resolve(true));
 
 		return Promises.settled(rawTextPromises);
 	}
@@ -201,17 +181,8 @@ export class ReplaceService implements IReplaceService {
 	private createEdits(arg: FileMatchOrMatch | ISearchTreeFileMatch[], resource: URI | null = null): ResourceTextEdit[] {
 		const edits: ResourceTextEdit[] = [];
 
-		if (isSearchTreeMatch(arg)) {
-			if (!arg.isReadonly) {
-				if (isIMatchInNotebook(arg)) {
-					// only apply edits if it's not a webview match, since webview matches are read-only
-					const match = arg;
-					edits.push(this.createEdit(match, match.replaceString, match.cell?.uri));
-				} else {
-					const match = <ISearchTreeMatch>arg;
-					edits.push(this.createEdit(match, match.replaceString, resource));
-				}
-			}
+		if (isSearchTreeMatch(arg) && !arg.isReadonly) {
+			edits.push(this.createEdit(arg, arg.replaceString, resource));
 		}
 
 		if (isSearchTreeFileMatch(arg)) {

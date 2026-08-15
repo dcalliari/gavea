@@ -249,7 +249,7 @@ export class RunSubagentTool extends Disposable implements IToolImpl {
 						continue;
 					}
 					// Write certain parts immediately to the model
-					if (part.kind === 'textEdit' || part.kind === 'notebookEdit' || part.kind === 'codeblockUri') {
+					if (part.kind === 'textEdit' || part.kind === 'codeblockUri') {
 						if (part.kind === 'codeblockUri' && !inEdit) {
 							inEdit = true;
 							model.acceptResponseProgress(request, { kind: 'markdownContent', content: new MarkdownString('```\n') });

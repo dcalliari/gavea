@@ -73,7 +73,7 @@ export function getOccurrencesAcrossMultipleModels(registry: LanguageFeatureRegi
 		const filteredModels = otherModels.filter(otherModel => {
 			return shouldSynchronizeModel(otherModel);
 		}).filter(otherModel => {
-			return score(provider.selector, otherModel.uri, otherModel.getLanguageId(), true, undefined, undefined) > 0;
+			return score(provider.selector, otherModel.uri, otherModel.getLanguageId(), true) > 0;
 		});
 		return Promise.resolve(provider.provideMultiDocumentHighlights(model, position, filteredModels, token))
 			.then(undefined, onUnexpectedExternalError);
