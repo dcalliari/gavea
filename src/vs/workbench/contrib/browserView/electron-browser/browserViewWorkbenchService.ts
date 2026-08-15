@@ -386,7 +386,7 @@ export class BrowserViewWorkbenchService extends Disposable implements IBrowserV
 
 		// Give registered handlers a chance to prevent the editor from opening.
 		for (const handler of this._openHandlers) {
-			if (!handler.shouldOpenEditor(view, owner, opts)) {
+			if (!handler.shouldOpenEditor(view, _owner, opts)) {
 				return;
 			}
 		}
