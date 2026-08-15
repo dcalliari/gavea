@@ -19,8 +19,6 @@ export const CodeActionKind = new class {
 	public readonly RefactorMove = this.Refactor.append('move');
 	public readonly RefactorRewrite = this.Refactor.append('rewrite');
 
-	public readonly Notebook = new HierarchicalKind('notebook');
-
 	public readonly Source = new HierarchicalKind('source');
 	public readonly SourceOrganizeImports = this.Source.append('organizeImports');
 	public readonly SourceFixAll = this.Source.append('fixAll');

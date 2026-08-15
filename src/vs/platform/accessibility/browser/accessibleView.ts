@@ -28,7 +28,6 @@ export const enum AccessibleViewProviderId {
 	ChatInputWindow = 'chatInputWindow',
 	InlineCompletions = 'inlineCompletions',
 	KeybindingsEditor = 'keybindingsEditor',
-	Notebook = 'notebook',
 	ReplEditor = 'replEditor',
 	Editor = 'editor',
 	Hover = 'hover',
