@@ -324,7 +324,7 @@ export class XtermTerminal extends Disposable implements IXtermTerminal, IDetach
 		this._updateUnicodeVersion();
 		this._markNavigationAddon = this._instantiationService.createInstance(MarkNavigationAddon, options.capabilities);
 		this.raw.loadAddon(this._markNavigationAddon);
-		this._decorationAddon = this._instantiationService.createInstance(DecorationAddon, resource, this._capabilities);
+		this._decorationAddon = this._instantiationService.createInstance(DecorationAddon, this._capabilities);
 		this._register(this._decorationAddon.onDidRequestRunCommand(e => this._onDidRequestRunCommand.fire(e)));
 		this._register(this._decorationAddon.onDidRequestCopyAsHtml(e => this._onDidRequestCopyAsHtml.fire(e)));
 		this.raw.loadAddon(this._decorationAddon);
