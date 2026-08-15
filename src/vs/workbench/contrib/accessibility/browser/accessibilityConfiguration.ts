@@ -56,7 +56,6 @@ export const enum AccessibilityVerbositySettingId {
 	TerminalChatOutput = 'accessibility.verbosity.terminalChatOutput',
 	InlineCompletions = 'accessibility.verbosity.inlineCompletions',
 	KeybindingsEditor = 'accessibility.verbosity.keybindingsEditor',
-	Notebook = 'accessibility.verbosity.notebook',
 	Editor = 'accessibility.verbosity.editor',
 	Hover = 'accessibility.verbosity.hover',
 	Notification = 'accessibility.verbosity.notification',
@@ -160,10 +159,6 @@ const configuration: IConfigurationNode = {
 		},
 		[AccessibilityVerbositySettingId.KeybindingsEditor]: {
 			description: localize('verbosity.keybindingsEditor.description', 'Provide information about how to change a keybinding in the keybindings editor when a row is focused and how to navigate to the results table.'),
-			...baseVerbosityProperty
-		},
-		[AccessibilityVerbositySettingId.Notebook]: {
-			description: localize('verbosity.notebook', 'Provide information about how to focus the cell container or inner editor when a notebook cell is focused.'),
 			...baseVerbosityProperty
 		},
 		[AccessibilityVerbositySettingId.Hover]: {
@@ -573,34 +568,6 @@ const configuration: IConfigurationNode = {
 				}
 			}
 		},
-		'accessibility.signals.notebookCellCompleted': {
-			...signalFeatureBase,
-			'description': localize('accessibility.signals.notebookCellCompleted', "Plays a signal - sound (audio cue) and/or announcement (alert) - when a notebook cell execution is successfully completed."),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.notebookCellCompleted.sound', "Plays a sound when a notebook cell execution is successfully completed."),
-					...soundFeatureBase
-				},
-				'announcement': {
-					'description': localize('accessibility.signals.notebookCellCompleted.announcement', "Announces when a notebook cell execution is successfully completed."),
-					...announcementFeatureBase
-				},
-			}
-		},
-		'accessibility.signals.notebookCellFailed': {
-			...signalFeatureBase,
-			'description': localize('accessibility.signals.notebookCellFailed', "Plays a signal - sound (audio cue) and/or announcement (alert) - when a notebook cell execution fails."),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.notebookCellFailed.sound', "Plays a sound when a notebook cell execution fails."),
-					...soundFeatureBase
-				},
-				'announcement': {
-					'description': localize('accessibility.signals.notebookCellFailed.announcement', "Announces when a notebook cell execution fails."),
-					...announcementFeatureBase
-				},
-			}
-		},
 		'accessibility.signals.progress': {
 			...signalFeatureBase,
 			'description': localize('accessibility.signals.progress', "Plays a signal - sound (audio cue) and/or announcement (alert) - on loop while progress is occurring."),
@@ -805,10 +772,10 @@ const configuration: IConfigurationNode = {
 			'type': 'object',
 			'tags': ['accessibility'],
 			additionalProperties: false,
-			'markdownDescription': localize('accessibility.signals.format', "Plays a signal - sound (audio cue) and/or announcement (alert) - when a file or notebook is formatted."),
+			'markdownDescription': localize('accessibility.signals.format', "Plays a signal - sound (audio cue) and/or announcement (alert) - when a file is formatted."),
 			'properties': {
 				'sound': {
-					'description': localize('accessibility.signals.format.sound', "Plays a sound when a file or notebook is formatted."),
+					'description': localize('accessibility.signals.format.sound', "Plays a sound when a file is formatted."),
 					'type': 'string',
 					'enum': ['userGesture', 'always', 'never'],
 					'default': 'never',
@@ -819,7 +786,7 @@ const configuration: IConfigurationNode = {
 					],
 				},
 				'announcement': {
-					'description': localize('accessibility.signals.format.announcement', "Announces when a file or notebook is formatted."),
+					'description': localize('accessibility.signals.format.announcement', "Announces when a file is formatted."),
 					'type': 'string',
 					'enum': ['userGesture', 'always', 'never'],
 					'default': 'never',
@@ -907,7 +874,7 @@ export function registerAccessibilityConfiguration() {
 		...workbenchConfigurationNodeBase,
 		properties: {
 			[AccessibilityWorkbenchSettingId.DimUnfocusedEnabled]: {
-				description: localize('dimUnfocusedEnabled', 'Whether to dim unfocused editors and terminals, which makes it more clear where typed input will go to. This works with the majority of editors with the notable exceptions of those that utilize iframes like notebooks and extension webview editors.'),
+				description: localize('dimUnfocusedEnabled', 'Whether to dim unfocused editors and terminals, which makes it more clear where typed input will go to. This works with the majority of editors with the notable exceptions of those that utilize iframes like extension webview editors.'),
 				type: 'boolean',
 				default: false,
 				tags: ['accessibility'],

@@ -106,20 +106,13 @@ export async function getCodeActions(
 	token: CancellationToken,
 ): Promise<CodeActionSet> {
 	const filter = trigger.filter || {};
-	const notebookFilter: CodeActionFilter = {
-		...filter,
-		excludes: [...(filter.excludes || []), CodeActionKind.Notebook],
-	};
-
 	const codeActionContext: languages.CodeActionContext = {
 		only: filter.include?.value,
 		trigger: trigger.type,
 	};
 
 	const cts = new TextModelCancellationTokenSource(model, token);
-	// if the trigger is auto (autosave, lightbulb, etc), we should exclude notebook codeActions
-	const excludeNotebookCodeActions = (trigger.type === languages.CodeActionTriggerType.Auto);
-	const providers = getCodeActionProviders(registry, model, (excludeNotebookCodeActions) ? notebookFilter : filter);
+	const providers = getCodeActionProviders(registry, model, filter);
 
 	const disposables = new DisposableStore();
 	const promises = providers.map(async provider => {
