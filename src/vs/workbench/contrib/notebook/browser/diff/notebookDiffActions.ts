@@ -29,7 +29,6 @@ import { Codicon } from '../../../../../base/common/codicons.js';
 import type { URI } from '../../../../../base/common/uri.js';
 import { TextEditorSelectionRevealType, type ITextEditorOptions } from '../../../../../platform/editor/common/editor.js';
 import product from '../../../../../platform/product/common/product.js';
-import { ctxHasEditorModification, ctxHasRequestInProgress } from '../../../chat/browser/chatEditing/chatEditingEditorContextKeys.js';
 
 // ActiveEditorContext.isEqualTo(SearchEditorConstants.SearchEditorID)
 
