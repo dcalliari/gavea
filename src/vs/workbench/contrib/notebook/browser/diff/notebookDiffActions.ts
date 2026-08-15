@@ -707,8 +707,7 @@ registerAction2(class extends Action2 {
 					group: '1_diff',
 					order: 10,
 					when: ContextKeyExpr.and(ActiveEditorContext.isEqualTo(NotebookTextDiffEditor.ID),
-						ContextKeyExpr.equals('config.notebook.diff.experimental.toggleInline', true),
-						ctxHasEditorModification.negate(), ctxHasRequestInProgress.negate())
+						ContextKeyExpr.equals('config.notebook.diff.experimental.toggleInline', true))
 				}
 			}
 		);
