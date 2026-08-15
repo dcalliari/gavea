@@ -19,7 +19,6 @@ import { CSSExtensionPoint } from '../../services/themes/browser/cssExtensionPoi
 import './mainThreadAgentEditorComments.js';
 import './mainThreadLocalization.js';
 import './mainThreadBulkEdits.js';
-import './mainThreadEmbeddings.js';
 import './mainThreadCodeInsets.js';
 import './mainThreadCLICommands.js';
 import './mainThreadClipboard.js';
