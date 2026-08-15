@@ -7,5 +7,7 @@
 	"container.title": "Frota",
 	"view.title": "Frota",
 	"command.refresh": "Atualizar Frota",
-	"command.configure": "Configurar Repositórios da Frota"
+	"command.configure": "Configurar Repositórios da Frota",
+	"command.openRepository": "Abrir Repositório",
+	"status.tooltip": "Frota: repositórios, alterações e agentes ativos"
 }
