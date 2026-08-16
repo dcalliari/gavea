@@ -16,8 +16,8 @@ import { createDecorator } from '../../../platform/instantiation/common/instanti
 import { ISignService } from '../../../platform/sign/common/sign.js';
 import { IWorkspaceFolderData } from '../../../platform/workspace/common/workspace.js';
 import { AbstractDebugAdapter } from '../../contrib/debug/common/abstractDebugAdapter.js';
-import { DebugVisualizationType, IAdapterDescriptor, IConfig, IDebugAdapter, IDebugAdapterExecutable, IDebugAdapterImpl, IDebugAdapterNamedPipeServer, IDebugAdapterServer, IDebuggerContribution, IDebugVisualization, IDebugVisualizationContext, IDebugVisualizationTreeItem, MainThreadDebugVisualization } from '../../contrib/debug/common/debug.js';
-import { convertToDAPaths, convertToVSCPaths, isDebuggerMainContribution } from '../../contrib/debug/common/debugUtils.js';
+import { DebugVisualizationType, IAdapterDescriptor, IConfig, IDebugAdapter, IDebugAdapterExecutable, IDebugAdapterImpl, IDebugAdapterNamedPipeServer, IDebugAdapterServer, IDebugVisualization, IDebugVisualizationContext, IDebugVisualizationTreeItem, MainThreadDebugVisualization } from '../../contrib/debug/common/debug.js';
+import { convertToDAPaths, convertToVSCPaths } from '../../contrib/debug/common/debugUtils.js';
 import { ExtensionDescriptionRegistry } from '../../services/extensions/common/extensionDescriptionRegistry.js';
 import { Dto } from '../../services/extensions/common/proxyIdentifier.js';
 import { DebugSessionUUID, ExtHostDebugServiceShape, IBreakpointsDeltaDto, IDebugSessionDto, IFunctionBreakpointDto, ISourceMultiBreakpointDto, IStackFrameFocusDto, IThreadFocusDto, MainContext, MainThreadDebugServiceShape, MainThreadTelemetryShape } from './extHost.protocol.js';
@@ -147,7 +147,11 @@ export abstract class ExtHostDebugServiceBase extends DisposableCls implements I
 		this._onDidChangeActiveDebugSession = this._register(new Emitter<vscode.DebugSession | undefined>());
 		this._onDidReceiveDebugSessionCustomEvent = this._register(new Emitter<vscode.DebugSessionCustomEvent>());
 
-		this._debugServiceProxy = extHostRpcService.getProxy(MainContext.MainThreadDebugService);
+		this._debugServiceProxy = new Proxy(Object.create(null), {
+			get() {
+				throw new Error('Debug support is unavailable');
+			}
+		}) as MainThreadDebugServiceShape;
 
 		this._onDidChangeBreakpoints = this._register(new Emitter<vscode.BreakpointsChangeEvent>());
 
@@ -156,13 +160,6 @@ export abstract class ExtHostDebugServiceBase extends DisposableCls implements I
 		this._activeDebugConsole = new ExtHostDebugConsole(this._debugServiceProxy);
 
 		this._breakpoints = new Map<string, vscode.Breakpoint>();
-
-		this._extensionService.getExtensionRegistry().then((extensionRegistry: ExtensionDescriptionRegistry) => {
-			this._register(extensionRegistry.onDidChange(_ => {
-				this.registerAllDebugTypes(extensionRegistry);
-			}));
-			this.registerAllDebugTypes(extensionRegistry);
-		});
 
 		this._telemetryProxy = extHostRpcService.getProxy(MainContext.MainThreadTelemetry);
 	}
@@ -263,26 +260,6 @@ export abstract class ExtHostDebugServiceBase extends DisposableCls implements I
 		} else {
 			throw new Error(`cannot create uri from DAP 'source' object; properties 'path' and 'sourceReference' are both missing.`);
 		}
-	}
-
-	private registerAllDebugTypes(extensionRegistry: ExtensionDescriptionRegistry) {
-
-		const debugTypes: string[] = [];
-
-		for (const ed of extensionRegistry.getAllExtensionDescriptions()) {
-			if (ed.contributes) {
-				const debuggers = <IDebuggerContribution[]>ed.contributes['debuggers'];
-				if (debuggers && debuggers.length > 0) {
-					for (const dbg of debuggers) {
-						if (isDebuggerMainContribution(dbg)) {
-							debugTypes.push(dbg.type);
-						}
-					}
-				}
-			}
-		}
-
-		this._debugServiceProxy.$registerDebugTypes(debugTypes);
 	}
 
 	// extension debug API

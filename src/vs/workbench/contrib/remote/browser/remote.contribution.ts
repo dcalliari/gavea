@@ -12,7 +12,7 @@ import { LifecyclePhase } from '../../../services/lifecycle/common/lifecycle.js'
 import { TunnelFactoryContribution } from './tunnelFactory.js';
 import { RemoteAgentConnectionStatusListener, RemoteMarkers } from './remote.js';
 import { RemoteStatusIndicator } from './remoteIndicator.js';
-import { AutomaticPortForwarding, ForwardedPortsView, PortRestore, TOGGLE_VIEW_ACTION_ID } from './remoteExplorer.js';
+import { ForwardedPortsView, PortRestore, TOGGLE_VIEW_ACTION_ID } from './remoteExplorer.js';
 import { InitialRemoteConnectionHealthContribution } from './remoteConnectionHealth.js';
 import { IViewsService } from '../../../services/views/common/viewsService.js';
 import { TUNNEL_VIEW_ID } from '../../../services/remote/common/remoteExplorerService.js';
@@ -43,6 +43,5 @@ workbenchContributionsRegistry.registerWorkbenchContribution(RemoteAgentConnecti
 registerWorkbenchContribution2(RemoteStatusIndicator.ID, RemoteStatusIndicator, WorkbenchPhase.BlockStartup);
 workbenchContributionsRegistry.registerWorkbenchContribution(ForwardedPortsView, LifecyclePhase.Restored);
 workbenchContributionsRegistry.registerWorkbenchContribution(PortRestore, LifecyclePhase.Eventually);
-workbenchContributionsRegistry.registerWorkbenchContribution(AutomaticPortForwarding, LifecyclePhase.Eventually);
 workbenchContributionsRegistry.registerWorkbenchContribution(RemoteMarkers, LifecyclePhase.Eventually);
 workbenchContributionsRegistry.registerWorkbenchContribution(InitialRemoteConnectionHealthContribution, LifecyclePhase.Restored);
