@@ -125,6 +125,7 @@ export interface IProductConfiguration {
 	readonly featuredExtensions?: IFeaturedExtension[];
 	readonly defaultLayout?: {
 		readonly views?: { readonly id: string }[];
+		readonly commands?: string[];
 		readonly sideBarWidth?: number;
 		readonly force?: boolean;
 	};

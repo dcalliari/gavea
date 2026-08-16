@@ -789,6 +789,11 @@ export interface IDefaultLayout {
 	readonly views?: IDefaultView[];
 
 	/**
+	 * A list of commands to run by default.
+	 */
+	readonly commands?: string[];
+
+	/**
 	 * The default width of the primary side bar.
 	 */
 	readonly sideBarWidth?: number;

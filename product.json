@@ -114,6 +114,7 @@
 	"sessionsWindowAllowedExtensions": [],
 	"defaultLayout": {
 		"views": [{ "id": "gavea.frota" }],
+		"commands": ["gavea.frota.openDeck"],
 		"sideBarWidth": 360
 	},
 	"configurationDefaults": {

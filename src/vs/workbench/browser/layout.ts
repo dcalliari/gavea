@@ -22,6 +22,7 @@ import { ServicesAccessor } from '../../platform/instantiation/common/instantiat
 import { StartupKind, ILifecycleService } from '../services/lifecycle/common/lifecycle.js';
 import { getMenuBarVisibility, IPath, hasNativeTitlebar, hasCustomTitlebar, TitleBarSetting, CustomTitleBarVisibility, useWindowControlsOverlay, DEFAULT_EMPTY_WINDOW_SIZE, DEFAULT_WORKSPACE_WINDOW_SIZE, hasNativeMenu, MenuSettings } from '../../platform/window/common/window.js';
 import { IHostService } from '../services/host/browser/host.js';
+import { ICommandService } from '../../platform/commands/common/commands.js';
 import { IBrowserWorkbenchEnvironmentService } from '../services/environment/browser/environmentService.js';
 import { IEditorService } from '../services/editor/common/editorService.js';
 import { EditorGroupLayout, GroupActivationReason, GroupOrientation, GroupsOrder, IEditorGroupsService } from '../services/editor/common/editorGroupsService.js';
@@ -292,6 +293,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 	private environmentService!: IBrowserWorkbenchEnvironmentService;
 	private extensionService!: IExtensionService;
+	private commandService!: ICommandService;
 	private configurationService!: IConfigurationService;
 	private storageService!: IStorageService;
 	private hostService!: IHostService;
@@ -331,6 +333,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		this.storageService = accessor.get(IStorageService);
 		this.themeService = accessor.get(IThemeService);
 		this.extensionService = accessor.get(IExtensionService);
+		this.commandService = accessor.get(ICommandService);
 		this.logService = accessor.get(ILogService);
 		this.telemetryService = accessor.get(ITelemetryService);
 		this.auxiliaryWindowService = accessor.get(IAuxiliaryWindowService);
@@ -1137,6 +1140,25 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			}
 		})();
 		layoutReadyPromises.push(restoreDefaultViewsPromise);
+
+		// Run product commands for a new empty workbench
+		layoutReadyPromises.push((async () => {
+			const defaultCommands = this.environmentService.options?.defaultLayout?.commands;
+			if (!defaultCommands?.length || !this.storageService.isNew(StorageScope.WORKSPACE) || this.contextService.getWorkbenchState() !== WorkbenchState.EMPTY || this.editorGroupService.hasRestorableState) {
+				return;
+			}
+
+			await restoreDefaultViewsPromise;
+			const editorsToOpen = await this.state.initialization.editor.editorsToOpen;
+			if (editorsToOpen.length) {
+				return;
+			}
+
+			await this.extensionService.whenInstalledExtensionsRegistered();
+			for (const command of defaultCommands) {
+				await this.commandService.executeCommand(command);
+			}
+		})());
 
 		// Restore Sidebar
 		layoutReadyPromises.push((async () => {
