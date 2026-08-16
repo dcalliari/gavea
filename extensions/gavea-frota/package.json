@@ -6,7 +6,7 @@
 	"publisher": "gavea",
 	"license": "MIT",
 	"engines": { "vscode": "^1.99.0" },
-	"activationEvents": ["onView:gavea.frota"],
+	"activationEvents": ["onView:gavea.frota", "onCommand:gavea.frota.openDeck"],
 	"main": "./out/extension",
 	"contributes": {
 		"configuration": {
@@ -34,6 +34,7 @@
 		"viewsContainers": { "activitybar": [{ "id": "gavea-frota", "title": "%container.title%", "icon": "$(repo)" }] },
 		"views": { "gavea-frota": [{ "id": "gavea.frota", "name": "%view.title%" }] },
 		"commands": [
+			{ "command": "gavea.frota.openDeck", "title": "%command.openDeck%", "icon": "$(layout-centered)" },
 			{ "command": "gavea.frota.refresh", "title": "%command.refresh%", "icon": "$(refresh)" },
 			{ "command": "gavea.frota.configure", "title": "%command.configure%" },
 			{ "command": "gavea.frota.pull", "title": "%command.pull%", "icon": "$(cloud-download)" },
@@ -51,6 +52,7 @@
 				{ "command": "gavea.frota.openCommitDiff", "when": "view == gavea.frota && viewItem == gavea.frota.commit", "group": "inline@1" }
 			],
 			"commandPalette": [
+				{ "command": "gavea.frota.openDeck" },
 				{ "command": "gavea.frota.refresh" },
 				{ "command": "gavea.frota.configure" },
 				{ "command": "gavea.frota.pull" },

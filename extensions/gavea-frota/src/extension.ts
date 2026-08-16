@@ -6,12 +6,11 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { readAgentStates, AgentState } from './firstmate';
+import { readAgentStates } from './firstmate';
 import { ChangedFile, CommitFile, FleetSummary, GitRepositoryState, LocalCommit, disambiguatedNames, readGitRepository, repositoryStatus, summarizeFleet } from './git';
+import { DeckLabels, DeckRepository, renderFleetDeck } from './deck';
 
-interface FleetRepository extends GitRepositoryState {
-	readonly agent?: AgentState;
-}
+type FleetRepository = DeckRepository;
 
 class RepositoryItem extends vscode.TreeItem {
 	constructor(readonly repository: FleetRepository, label = repository.name) {
@@ -84,6 +83,36 @@ function formatFleetSummary(summary: FleetSummary): string {
 	return `$(repo) ${summary.repositories} · $(warning) ${summary.changed} · $(pulse) ${summary.activeAgents}`;
 }
 
+function deckLabels(): DeckLabels {
+	return {
+		title: vscode.l10n.t('Convés Principal'),
+		subtitle: vscode.l10n.t('Acompanhe a frota enquanto os agentes trabalham'),
+		refresh: vscode.l10n.t('Atualizar'),
+		configure: vscode.l10n.t('Configurar frota'),
+		repositories: vscode.l10n.t('repositórios'),
+		changedRepositories: vscode.l10n.t('com alterações'),
+		activeAgents: vscode.l10n.t('agentes ativos'),
+		branch: vscode.l10n.t('Branch'),
+		tree: vscode.l10n.t('Árvore'),
+		clean: vscode.l10n.t('limpa'),
+		changed: vscode.l10n.t('alterada(s)'),
+		ahead: vscode.l10n.t('à frente do remoto'),
+		behind: vscode.l10n.t('atrás do remoto'),
+		agent: vscode.l10n.t('Agente'),
+		noAgent: vscode.l10n.t('Nenhum agente ativo'),
+		localCommits: vscode.l10n.t('Commits locais'),
+		noLocalCommits: vscode.l10n.t('Nenhum commit local não enviado'),
+		pull: vscode.l10n.t('Pull'),
+		push: vscode.l10n.t('Push'),
+		diff: vscode.l10n.t('Abrir diff'),
+		openRepository: vscode.l10n.t('Abrir repositório'),
+		openCommitDiff: vscode.l10n.t('Ver diff'),
+		configureNow: vscode.l10n.t('Configurar agora'),
+		noRepositories: vscode.l10n.t('Nenhum repositório configurado'),
+		error: vscode.l10n.t('indisponível')
+	};
+}
+
 class FleetProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 	private readonly changeEmitter = new vscode.EventEmitter<void>();
 	readonly onDidChangeTreeData = this.changeEmitter.event;
@@ -133,10 +162,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	const tree = vscode.window.createTreeView('gavea.frota', { treeDataProvider: provider, showCollapseAll: false });
 	context.subscriptions.push(tree);
 	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10);
-	statusBar.command = 'gavea.frota.focus';
+	statusBar.command = 'gavea.frota.openDeck';
 	statusBar.tooltip = 'Frota: repositórios · alterações · agentes ativos';
 	statusBar.show();
 	context.subscriptions.push(statusBar);
+	let deckPanel: vscode.WebviewPanel | undefined;
+	let latestRepositories: FleetRepository[] = [];
 	let refreshing = false;
 
 	const refresh = async (): Promise<void> => {
@@ -148,8 +179,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 			const configuration = vscode.workspace.getConfiguration('gavea.frota');
 			const configuredPaths = configuration.get<string[]>('repositorios', []).map(expandHome);
 			if (configuredPaths.length === 0) {
+				latestRepositories = [];
 				provider.setItems([emptyItem()]);
 				statusBar.text = formatFleetSummary({ repositories: 0, changed: 0, activeAgents: 0 });
+				if (deckPanel) {
+					deckPanel.webview.html = renderFleetDeck([], { repositories: 0, changed: 0, activeAgents: 0 }, deckLabels());
+				}
 				return;
 			}
 			ensureWorkspaceFolders(configuredPaths);
@@ -166,16 +201,40 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 					return state;
 				}
 			}));
+			latestRepositories = repositories;
 			const names = disambiguatedNames(repositories);
 			provider.setItems(repositories.map((repository, index) => new RepositoryItem(repository, names[index])));
 			const activeAgentPaths = new Set(repositories.filter(repository => repository.agent).map(repository => repository.path));
-			statusBar.text = formatFleetSummary(summarizeFleet(repositories, activeAgentPaths));
+			const summary = summarizeFleet(repositories, activeAgentPaths);
+			statusBar.text = formatFleetSummary(summary);
+			if (deckPanel) {
+				deckPanel.webview.html = renderFleetDeck(repositories, summary, deckLabels());
+			}
 		} finally {
 			refreshing = false;
 		}
 	};
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.refresh', refresh));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.focus', () => vscode.commands.executeCommand('workbench.view.extension.gavea-frota')));
+	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openDeck', () => {
+		if (deckPanel) {
+			deckPanel.reveal(vscode.ViewColumn.Active);
+			return;
+		}
+		deckPanel = vscode.window.createWebviewPanel('gavea.frota.deck', vscode.l10n.t('Convés Principal'), vscode.ViewColumn.Active, {
+			enableScripts: true,
+			retainContextWhenHidden: true
+		});
+		deckPanel.webview.html = renderFleetDeck([], { repositories: 0, changed: 0, activeAgents: 0 }, deckLabels());
+		deckPanel.onDidDispose(() => {
+			deckPanel = undefined;
+			updateTimer();
+		}, undefined, context.subscriptions);
+		deckPanel.webview.onDidReceiveMessage(message => void handleDeckMessage(message, latestRepositories, refresh), undefined, context.subscriptions);
+		deckPanel.onDidChangeViewState(() => updateTimer());
+		void refresh();
+		updateTimer();
+	}));
+	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.focus', () => vscode.commands.executeCommand('gavea.frota.openDeck')));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.configure', () => vscode.commands.executeCommand('workbench.action.openSettings', '@ext:gavea.gavea-frota')));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.pull', async (item: RepositoryItem) => {
 		if (item instanceof RepositoryItem) {
@@ -206,7 +265,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	}));
 	let timer: ReturnType<typeof setInterval> | undefined;
 	const updateTimer = (): void => {
-		if (tree.visible && vscode.window.state.focused) {
+		if ((tree.visible || deckPanel?.visible) && vscode.window.state.focused) {
 			clearInterval(timer);
 			const seconds = Math.max(1, vscode.workspace.getConfiguration('gavea.frota').get<number>('intervaloAtualizacao', 10));
 			timer = setInterval(() => void refresh(), seconds * 1000);
@@ -236,6 +295,54 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	context.subscriptions.push({ dispose: () => clearInterval(timer) });
 	await refresh();
 	updateTimer();
+}
+
+interface DeckMessage {
+	readonly type: string;
+	readonly repositoryPath?: string;
+	readonly commitHash?: string;
+}
+
+async function handleDeckMessage(message: DeckMessage, repositories: readonly FleetRepository[], refresh: () => Promise<void>): Promise<void> {
+	if (message.type === 'refresh') {
+		await refresh();
+		return;
+	}
+	if (message.type === 'configure') {
+		await vscode.commands.executeCommand('gavea.frota.configure');
+		return;
+	}
+	const repository = repositories.find(candidate => candidate.path === message.repositoryPath);
+	if (!repository) {
+		return;
+	}
+	switch (message.type) {
+		case 'pull':
+			await executeNativeGitAction(repository, 'git.pull', 'Pull');
+			await refresh();
+			break;
+		case 'push':
+			await executeNativeGitAction(repository, 'git.push', 'Push');
+			await refresh();
+			break;
+		case 'openRepository':
+			await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(repository.path));
+			break;
+		case 'diff': {
+			const file = repository.changedPaths?.[0];
+			if (file) {
+				await vscode.commands.executeCommand('git.openChange', vscode.Uri.file(path.join(repository.path, file.path)));
+			}
+			break;
+		}
+		case 'openCommitDiff': {
+			const commit = repository.localCommits?.find(candidate => candidate.hash === message.commitHash);
+			if (commit) {
+				await openCommitDiff(repository, commit);
+			}
+			break;
+		}
+	}
 }
 
 async function executeNativeGitAction(repository: FleetRepository, command: 'git.pull' | 'git.push', label: string): Promise<void> {
