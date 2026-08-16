@@ -29,9 +29,9 @@ class RepositoryItem extends vscode.TreeItem {
 		const icon = status === 'error' ? 'error' : status === 'working' ? 'sync' : status === 'changed' ? 'repo' : 'check';
 		const color = status === 'error' ? 'charts.red' : status === 'working' ? 'charts.blue' : status === 'changed' ? 'charts.yellow' : 'charts.green';
 		this.iconPath = new vscode.ThemeIcon(icon, new vscode.ThemeColor(color));
-		this.command = repository.error
-			? { command: 'gavea.frota.configure', title: 'Configurar Repositórios da Frota' }
-			: { command: 'gavea.frota.focusSourceControl', title: 'Focar no Controle de Código-Fonte' };
+		if (repository.error) {
+			this.command = { command: 'gavea.frota.configure', title: 'Configurar Repositórios da Frota' };
+		}
 	}
 }
 
@@ -176,7 +176,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	};
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.refresh', refresh));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.focus', () => vscode.commands.executeCommand('workbench.view.extension.gavea-frota')));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.focusSourceControl', () => vscode.commands.executeCommand('workbench.view.scm')));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.configure', () => vscode.commands.executeCommand('workbench.action.openSettings', '@ext:gavea.gavea-frota')));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.pull', async (item: RepositoryItem) => {
 		if (item instanceof RepositoryItem) {
