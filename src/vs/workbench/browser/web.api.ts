@@ -789,6 +789,11 @@ export interface IDefaultLayout {
 	readonly views?: IDefaultView[];
 
 	/**
+	 * The default width of the primary side bar.
+	 */
+	readonly sideBarWidth?: number;
+
+	/**
 	 * A list of editors to show by default.
 	 */
 	readonly editors?: IDefaultEditor[];

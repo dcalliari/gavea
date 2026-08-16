@@ -123,6 +123,12 @@ export interface IProductConfiguration {
 	readonly builtInExtensions?: IBuiltInExtension[];
 	readonly walkthroughMetadata?: IProductWalkthrough[];
 	readonly featuredExtensions?: IFeaturedExtension[];
+	readonly defaultLayout?: {
+		readonly views?: { readonly id: string }[];
+		readonly sideBarWidth?: number;
+		readonly force?: boolean;
+	};
+	readonly configurationDefaults?: IStringDictionary<unknown>;
 
 	readonly downloadUrl?: string;
 	readonly updateUrl?: string;

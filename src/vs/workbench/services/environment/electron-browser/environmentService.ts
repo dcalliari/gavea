@@ -14,6 +14,7 @@ import { URI } from '../../../../base/common/uri.js';
 import { Schemas } from '../../../../base/common/network.js';
 import { IProductService } from '../../../../platform/product/common/productService.js';
 import { joinPath } from '../../../../base/common/resources.js';
+import { IWorkbenchConstructionOptions } from '../../../browser/web.api.js';
 import { VSBuffer } from '../../../../base/common/buffer.js';
 
 export const INativeWorkbenchEnvironmentService = refineServiceDecorator<IEnvironmentService, INativeWorkbenchEnvironmentService>(IEnvironmentService);
@@ -75,6 +76,14 @@ export class NativeWorkbenchEnvironmentService extends AbstractNativeEnvironment
 
 	@memoize
 	get remoteAuthority() { return this.configuration.remoteAuthority; }
+
+	@memoize
+	get options(): IWorkbenchConstructionOptions {
+		return {
+			defaultLayout: this.productService.defaultLayout,
+			configurationDefaults: this.productService.configurationDefaults,
+		};
+	}
 
 	@memoize
 	get expectsResolverExtension() { return !!this.configuration.remoteAuthority?.includes('+'); }

@@ -112,5 +112,13 @@
 		}
 	],
 	"sessionsWindowAllowedExtensions": [],
+	"defaultLayout": {
+		"views": [{ "id": "gavea.frota" }],
+		"sideBarWidth": 360
+	},
+	"configurationDefaults": {
+		"workbench.startupEditor": "none",
+		"workbench.editor.empty.hint": "hidden"
+	},
 	"voiceWsUrl": "wss://falcon-caas.mai.microsoft.com/voice-code/api/v1/realtime/voice"
 }
