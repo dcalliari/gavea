@@ -50,3 +50,19 @@ test('reads branch and dirty state', async () => {
 	assert.deepStrictEqual({ branch: state.branch, changedFiles: state.changedFiles, error: state.error }, { branch: 'master', changedFiles: 1, error: undefined });
 	await fs.rm(repository, { recursive: true, force: true });
 });
+
+test('reads local commits and their changed files', async () => {
+	const repository = await fs.mkdtemp(path.join(os.tmpdir(), 'gavea-git-'));
+	try {
+		await execFileAsync('git', ['init', '-q', repository]);
+		await execFileAsync('git', ['-C', repository, 'config', 'user.email', 'test@example.com']);
+		await execFileAsync('git', ['-C', repository, 'config', 'user.name', 'Test']);
+		await fs.writeFile(path.join(repository, 'committed.txt'), 'committed');
+		await execFileAsync('git', ['-C', repository, 'add', 'committed.txt']);
+		await execFileAsync('git', ['-C', repository, 'commit', '-q', '-m', 'local commit']);
+		const state = await readGitRepository(repository);
+		assert.deepStrictEqual(state.localCommits?.map(commit => ({ subject: commit.subject, status: commit.files[0]?.status, path: commit.files[0]?.path })), [{ subject: 'local commit', status: 'A', path: 'committed.txt' }]);
+	} finally {
+		await fs.rm(repository, { recursive: true, force: true });
+	}
+});

@@ -32,11 +32,32 @@ export function disambiguatedNames(repositories: readonly Pick<GitRepositoryStat
 	});
 }
 
+export interface ChangedFile {
+	readonly path: string;
+	readonly status: string;
+}
+
+export interface CommitFile {
+	readonly path: string;
+	readonly originalPath?: string;
+	readonly status: string;
+}
+
+export interface LocalCommit {
+	readonly hash: string;
+	readonly shortHash: string;
+	readonly subject: string;
+	readonly parent?: string;
+	readonly files: readonly CommitFile[];
+}
+
 export interface GitRepositoryState {
 	readonly path: string;
 	readonly name: string;
 	readonly branch?: string;
 	readonly changedFiles?: number;
+	readonly changedPaths?: readonly ChangedFile[];
+	readonly localCommits?: readonly LocalCommit[];
 	readonly ahead?: number;
 	readonly behind?: number;
 	readonly error?: string;
@@ -75,21 +96,65 @@ export async function readGitRepository(repositoryPath: string): Promise<GitRepo
 	const name = repositoryPath.split(/[\\/]/).pop() || repositoryPath;
 	try {
 		const { stdout } = await execFileAsync('git', ['-C', repositoryPath, 'status', '--porcelain=v1', '--branch'], { maxBuffer: 1024 * 1024 });
-		const lines = stdout.trimEnd().split('\n');
-		const header = lines.shift() || '';
-		const branchMatch = /^## (.+?)(?:\.\.\.(?:[^ ]+))?(?: \[ahead (\d+)(?:, behind (\d+))?\])?$/.exec(header);
-		const counts = /\[ahead (\d+)(?:, behind (\d+))?\]/.exec(header);
+		const { branch, ahead, behind, changedPaths } = parseStatus(stdout);
 		return {
 			path: repositoryPath,
 			name,
-			branch: (branchMatch?.[1] || header.replace(/^## /, '')).replace(/^No commits yet on /, '') || undefined,
-			changedFiles: lines.filter(Boolean).length,
-			ahead: counts ? Number(counts[1]) : undefined,
-			behind: counts?.[2] ? Number(counts[2]) : undefined
+			branch,
+			changedFiles: changedPaths.length,
+			changedPaths,
+			ahead,
+			behind,
+			localCommits: await readLocalCommits(repositoryPath)
 		};
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		const stderr = typeof error === 'object' && error !== null && 'stderr' in error && typeof error.stderr === 'string' ? error.stderr : '';
 		return { path: repositoryPath, name, error: (stderr || message).trim().split('\n')[0] };
+	}
+}
+
+function parseStatus(stdout: string): { branch?: string; ahead?: number; behind?: number; changedPaths: ChangedFile[] } {
+	const lines = stdout.trimEnd().split('\n');
+	const header = lines.shift() || '';
+	const branchMatch = /^## (.+?)(?:\.\.\.(?:[^ ]+))?(?: \[[^\]]+\])?$/.exec(header);
+	const counts = /\[(?:ahead (\d+)(?:, )?)?(?:behind (\d+))?\]/.exec(header);
+	return {
+		branch: (branchMatch?.[1] || header.replace(/^## /, '')).replace(/^No commits yet on /, '') || undefined,
+		ahead: counts ? Number(counts[1]) : undefined,
+		behind: counts?.[2] ? Number(counts[2]) : undefined,
+		changedPaths: lines.filter(Boolean).map(line => ({ status: line.slice(0, 2).trim(), path: line.slice(3).split(' -> ').at(-1) || line.slice(3) }))
+	};
+}
+
+async function readLocalCommits(repositoryPath: string): Promise<readonly LocalCommit[]> {
+	try {
+		let range: string[];
+		try {
+			const { stdout } = await execFileAsync('git', ['-C', repositoryPath, 'rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}']);
+			range = [`${stdout.trim()}..HEAD`];
+		} catch {
+			range = ['HEAD', '--not', '--remotes'];
+		}
+		const { stdout } = await execFileAsync('git', ['-C', repositoryPath, 'log', '--format=%H%x1f%h%x1f%s%x1f%P', '--no-decorate', ...range], { maxBuffer: 1024 * 1024 });
+		const commits = stdout.trimEnd().split('\n').filter(Boolean).map(line => {
+			const [hash, shortHash, subject, parents] = line.split('\x1f');
+			return { hash, shortHash, subject, parent: parents?.split(' ')[0] || undefined };
+		});
+		return Promise.all(commits.map(async commit => ({ ...commit, files: await readCommitFiles(repositoryPath, commit.hash) })));
+	} catch {
+		return [];
+	}
+}
+
+async function readCommitFiles(repositoryPath: string, hash: string): Promise<readonly CommitFile[]> {
+	try {
+		const { stdout } = await execFileAsync('git', ['-C', repositoryPath, 'diff-tree', '--root', '--no-commit-id', '--name-status', '--find-renames', '-r', '-m', hash], { maxBuffer: 1024 * 1024 });
+		return stdout.trimEnd().split('\n').filter(Boolean).map(line => {
+			const [status = '', firstPath = '', secondPath] = line.split('\t');
+			return { status: status.charAt(0), path: secondPath || firstPath, originalPath: status.startsWith('R') ? firstPath : undefined };
+		});
+	} catch {
+		return [];
 	}
 }

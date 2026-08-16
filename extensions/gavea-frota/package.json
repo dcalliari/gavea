@@ -10,7 +10,7 @@
 	"main": "./out/extension",
 	"contributes": {
 		"configuration": {
-			"title": "Gávea Fleet",
+			"title": "%configuration.title%",
 			"properties": {
 				"gavea.frota.repositorios": {
 					"type": "array",
@@ -35,11 +35,27 @@
 		"views": { "gavea-frota": [{ "id": "gavea.frota", "name": "%view.title%" }] },
 		"commands": [
 			{ "command": "gavea.frota.refresh", "title": "%command.refresh%", "icon": "$(refresh)" },
-			{ "command": "gavea.frota.configure", "title": "%command.configure%" }
+			{ "command": "gavea.frota.configure", "title": "%command.configure%" },
+			{ "command": "gavea.frota.pull", "title": "%command.pull%", "icon": "$(cloud-download)" },
+			{ "command": "gavea.frota.push", "title": "%command.push%", "icon": "$(cloud-upload)" },
+			{ "command": "gavea.frota.openChange", "title": "%command.openChange%", "icon": "$(diff)" },
+			{ "command": "gavea.frota.openCommitDiff", "title": "%command.openCommitDiff%", "icon": "$(git-compare)" },
+			{ "command": "gavea.frota.openCommitFile", "title": "%command.openCommitFile%" }
 		],
 		"menus": {
 			"view/title": [{ "command": "gavea.frota.refresh", "when": "view == gavea.frota", "group": "navigation" }],
-			"commandPalette": [{ "command": "gavea.frota.refresh" }, { "command": "gavea.frota.configure" }]
+			"view/item/context": [
+				{ "command": "gavea.frota.pull", "when": "view == gavea.frota && viewItem == gavea.frota.repository", "group": "inline@1" },
+				{ "command": "gavea.frota.push", "when": "view == gavea.frota && viewItem == gavea.frota.repository", "group": "inline@2" },
+				{ "command": "gavea.frota.openChange", "when": "view == gavea.frota && viewItem == gavea.frota.changedFile", "group": "inline@1" },
+				{ "command": "gavea.frota.openCommitDiff", "when": "view == gavea.frota && viewItem == gavea.frota.commit", "group": "inline@1" }
+			],
+			"commandPalette": [
+				{ "command": "gavea.frota.refresh" },
+				{ "command": "gavea.frota.configure" },
+				{ "command": "gavea.frota.pull" },
+				{ "command": "gavea.frota.push" }
+			]
 		}
 	},
 	"scripts": { "compile": "npx gulp compile-extension:gavea-frota", "test": "node --experimental-strip-types --test src/test/*.test.ts" },

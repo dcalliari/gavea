@@ -2,6 +2,7 @@
 	"displayName": "Frota Gávea",
 	"description": "Visão dos repositórios e trabalhos de agente",
 	"config.repositories": "Caminhos absolutos dos repositórios da frota",
+	"configuration.title": "Frota Gávea",
 	"config.firstmateHome": "Diretório local dos registros do firstmate",
 	"config.refreshInterval": "Intervalo de atualização da frota, em segundos",
 	"container.title": "Frota",
@@ -9,5 +10,10 @@
 	"command.refresh": "Atualizar Frota",
 	"command.configure": "Configurar Repositórios da Frota",
 	"command.openRepository": "Abrir Repositório",
+	"command.pull": "Fazer Pull",
+	"command.push": "Fazer Push",
+	"command.openChange": "Abrir Diff",
+	"command.openCommitDiff": "Abrir Diff do Commit",
+	"command.openCommitFile": "Abrir Conteúdo do Commit",
 	"status.tooltip": "Frota: repositórios, alterações e agentes ativos"
 }
