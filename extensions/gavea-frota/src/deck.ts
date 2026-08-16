@@ -41,7 +41,7 @@ export interface DeckLabels {
 export function renderFleetDeck(repositories: readonly DeckRepository[], summary: FleetSummary, labels: DeckLabels): string {
 	const nonce = createNonce();
 	const cards = repositories.length === 0
-		? `<section class="empty"><div class="empty-mark">$(repo)</div><h2>${escapeHtml(labels.noRepositories)}</h2><button data-action="configure">${escapeHtml(labels.configureNow)}</button></section>`
+		? `<section class="empty"><h2>${escapeHtml(labels.noRepositories)}</h2><button data-action="configure">${escapeHtml(labels.configureNow)}</button></section>`
 		: repositories.map(repository => renderRepository(repository, labels)).join('');
 	return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -62,6 +62,8 @@ body {
 	padding: 24px 28px 40px;
 	color: var(--vscode-foreground);
 	background: var(--vscode-editor-background);
+	overflow-x: hidden;
+	overflow-wrap: anywhere;
 }
 button {
 	font: inherit;
@@ -91,7 +93,7 @@ button[disabled] { opacity: .5; cursor: default; }
 }
 h1 { margin: 0 0 5px; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
 .subtitle { margin: 0; color: var(--vscode-descriptionForeground); }
-.header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.header-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .summary {
 	display: flex;
 	gap: 1px;
@@ -120,14 +122,16 @@ h1 { margin: 0 0 5px; font-size: 22px; font-weight: 600; letter-spacing: -.01em;
 .repository.changed { border-top-color: var(--vscode-charts-yellow); }
 .repository.error { border-top-color: var(--vscode-testing-iconFailed); }
 .repo-header { display: flex; justify-content: space-between; gap: 12px; padding: 13px 14px 9px; }
+.repo-heading { min-width: 0; }
 .repo-name { min-width: 0; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .repo-path { margin-top: 3px; color: var(--vscode-descriptionForeground); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.status { display: flex; align-items: center; gap: 6px; flex-shrink: 0; color: var(--vscode-descriptionForeground); font-size: 12px; }
+.status { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 45%; flex-shrink: 0; overflow: hidden; color: var(--vscode-descriptionForeground); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--vscode-testing-iconPassed); }
 .working .status-dot { background: var(--vscode-charts-blue); }
 .changed .status-dot { background: var(--vscode-charts-yellow); }
 .error .status-dot { background: var(--vscode-testing-iconFailed); }
 .repo-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 14px 12px; color: var(--vscode-descriptionForeground); font-size: 12px; }
+.repo-meta span { min-width: 0; overflow-wrap: anywhere; }
 .repo-meta strong { color: var(--vscode-foreground); font-weight: 500; }
 .agent {
 	margin: 0 14px 12px;
@@ -136,9 +140,9 @@ h1 { margin: 0 0 5px; font-size: 22px; font-weight: 600; letter-spacing: -.01em;
 	background: var(--vscode-textBlockQuote-background);
 }
 .agent-label { color: var(--vscode-descriptionForeground); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
-.agent-name { margin-top: 2px; font-weight: 600; }
+.agent-name { margin-top: 2px; font-weight: 600; overflow-wrap: anywhere; }
 .agent-state { color: var(--vscode-textLink-foreground); }
-.agent-text { margin-top: 3px; color: var(--vscode-descriptionForeground); font-size: 12px; }
+.agent-text { margin-top: 3px; color: var(--vscode-descriptionForeground); font-size: 12px; overflow-wrap: anywhere; }
 .no-agent { border-left-color: var(--vscode-panel-border); color: var(--vscode-descriptionForeground); }
 .sync {
 	display: grid;
@@ -157,8 +161,7 @@ h1 { margin: 0 0 5px; font-size: 22px; font-weight: 600; letter-spacing: -.01em;
 .commit-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .commit button { margin-left: auto; flex-shrink: 0; padding: 2px 7px; font-size: 11px; }
 .empty { max-width: 540px; margin: 80px auto; padding: 32px; text-align: center; border: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); }
-.empty-mark { margin-bottom: 12px; color: var(--vscode-textLink-foreground); font-size: 30px; }
-.empty h2 { margin: 0 0 18px; font-size: 16px; font-weight: 500; }
+.empty h2 { margin: 0 0 18px; font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
 .error-message { margin: 0 14px 14px; color: var(--vscode-errorForeground); font-size: 12px; }
 @media (max-width: 700px) { body { padding: 16px; } .deck-header { flex-direction: column; } .summary { flex-wrap: wrap; } .summary-item { min-width: calc(50% - 1px); } }
 </style>
