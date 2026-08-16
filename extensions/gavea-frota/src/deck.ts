@@ -63,7 +63,6 @@ body {
 	color: var(--vscode-foreground);
 	background: var(--vscode-editor-background);
 	overflow-x: hidden;
-	overflow-wrap: anywhere;
 }
 button {
 	font: inherit;
@@ -131,7 +130,8 @@ h1 { margin: 0 0 5px; font-size: 22px; font-weight: 600; letter-spacing: -.01em;
 .changed .status-dot { background: var(--vscode-charts-yellow); }
 .error .status-dot { background: var(--vscode-testing-iconFailed); }
 .repo-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 14px 12px; color: var(--vscode-descriptionForeground); font-size: 12px; }
-.repo-meta span { min-width: 0; overflow-wrap: anywhere; }
+.repo-meta span { min-width: 0; }
+.repo-meta .repo-value { overflow-wrap: anywhere; }
 .repo-meta strong { color: var(--vscode-foreground); font-weight: 500; }
 .agent {
 	margin: 0 14px 12px;
@@ -197,7 +197,7 @@ function renderRepository(repository: DeckRepository, labels: DeckLabels): strin
 	const hasChanges = Boolean(repository.changedPaths?.length);
 	return `<article class="repository ${status}">
 	<header class="repo-header"><div class="repo-heading"><div class="repo-name" title="${escapeHtml(repository.name)}">${escapeHtml(repository.name)}</div><div class="repo-path" title="${escapeHtml(repository.path)}">${escapeHtml(repository.path)}</div></div><div class="status"><span class="status-dot"></span>${escapeHtml(statusLabel)}</div></header>
-	<div class="repo-meta"><span>${escapeHtml(labels.branch)} <strong>${escapeHtml(repository.branch || 'HEAD')}</strong></span><span>${escapeHtml(labels.tree)} <strong>${repository.error ? labels.error : hasChanges ? `${repository.changedFiles} ${labels.changed}` : labels.clean}</strong></span></div>
+	<div class="repo-meta"><span>${escapeHtml(labels.branch)} <strong class="repo-value">${escapeHtml(repository.branch || 'HEAD')}</strong></span><span>${escapeHtml(labels.tree)} <strong>${repository.error ? labels.error : hasChanges ? `${repository.changedFiles} ${labels.changed}` : labels.clean}</strong></span></div>
 	${repository.agent ? `<section class="agent"><div class="agent-label">${escapeHtml(labels.agent)}</div><div class="agent-name">${escapeHtml(repository.agent.id)} <span class="agent-state">· ${escapeHtml(repository.agent.state)}</span></div>${repository.agent.text ? `<div class="agent-text">${escapeHtml(repository.agent.text)}</div>` : ''}</section>` : `<section class="agent no-agent"><div class="agent-label">${escapeHtml(labels.agent)}</div><div>${escapeHtml(labels.noAgent)}</div></section>`}
 	<section class="sync"><div class="sync-item"><span class="sync-value">${repository.ahead || 0}</span><span class="sync-label">${escapeHtml(labels.ahead)}</span></div><div class="sync-item"><span class="sync-value">${repository.behind || 0}</span><span class="sync-label">${escapeHtml(labels.behind)}</span></div></section>
 	<section class="section"><div class="section-heading"><span>${escapeHtml(labels.localCommits)}</span><span>${repository.localCommits?.length || 0}</span></div>${commits || `<div class="commit-subject">${escapeHtml(labels.noLocalCommits)}</div>`}</section>
