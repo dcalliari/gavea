@@ -63,6 +63,18 @@ export interface GitRepositoryState {
 	readonly error?: string;
 }
 
+export interface TaskGitState {
+	readonly path: string;
+	readonly branch?: string;
+	readonly baseBranch?: string;
+	readonly baseRef?: string;
+	readonly headRef?: string;
+	readonly changedFiles: number;
+	readonly changedPaths: readonly ChangedFile[];
+	readonly commits: readonly LocalCommit[];
+	readonly error?: string;
+}
+
 export type RepositoryStatus = 'error' | 'working' | 'changed' | 'clean';
 
 export function repositoryStatus(repository: GitRepositoryState, hasActiveAgent: boolean): RepositoryStatus {
@@ -114,6 +126,23 @@ export async function readGitRepository(repositoryPath: string): Promise<GitRepo
 	}
 }
 
+export async function readGitTask(worktreePath: string, projectPath?: string): Promise<TaskGitState> {
+	try {
+		const branch = (await execFileAsync('git', ['-C', worktreePath, 'branch', '--show-current'])).stdout.trim() || undefined;
+		const headRef = (await execFileAsync('git', ['-C', worktreePath, 'rev-parse', 'HEAD'])).stdout.trim();
+		const basePath = projectPath || worktreePath;
+		const baseBranch = (await execFileAsync('git', ['-C', basePath, 'branch', '--show-current'])).stdout.trim() || 'main';
+		const baseRef = (await execFileAsync('git', ['-C', basePath, 'rev-parse', '--verify', baseBranch])).stdout.trim();
+		const changedPaths = await readDiffPaths(worktreePath, baseRef, headRef);
+		const commits = await readCommits(worktreePath, [`${baseRef}..${headRef}`]);
+		return { path: worktreePath, branch, baseBranch, baseRef, headRef, changedFiles: changedPaths.length, changedPaths, commits };
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		const stderr = typeof error === 'object' && error !== null && 'stderr' in error && typeof error.stderr === 'string' ? error.stderr : '';
+		return { path: worktreePath, changedFiles: 0, changedPaths: [], commits: [], error: (stderr || message).trim().split('\\n')[0] };
+	}
+}
+
 function parseStatus(stdout: string): { branch?: string; ahead?: number; behind?: number; changedPaths: ChangedFile[] } {
 	const lines = stdout.trimEnd().split('\n');
 	const header = lines.shift() || '';
@@ -136,15 +165,27 @@ async function readLocalCommits(repositoryPath: string): Promise<readonly LocalC
 		} catch {
 			range = ['HEAD', '--not', '--remotes'];
 		}
-		const { stdout } = await execFileAsync('git', ['-C', repositoryPath, 'log', '--format=%H%x1f%h%x1f%s%x1f%P', '--no-decorate', ...range], { maxBuffer: 1024 * 1024 });
-		const commits = stdout.trimEnd().split('\n').filter(Boolean).map(line => {
-			const [hash, shortHash, subject, parents] = line.split('\x1f');
-			return { hash, shortHash, subject, parent: parents?.split(' ')[0] || undefined };
-		});
-		return Promise.all(commits.map(async commit => ({ ...commit, files: await readCommitFiles(repositoryPath, commit.hash) })));
+		return await readCommits(repositoryPath, range);
 	} catch {
 		return [];
 	}
+}
+
+async function readCommits(repositoryPath: string, range: readonly string[]): Promise<readonly LocalCommit[]> {
+	const { stdout } = await execFileAsync('git', ['-C', repositoryPath, 'log', '--format=%H%x1f%h%x1f%s%x1f%P', '--no-decorate', ...range], { maxBuffer: 1024 * 1024 });
+	const commits = stdout.trimEnd().split('\n').filter(Boolean).map(line => {
+		const [hash, shortHash, subject, parents] = line.split('\x1f');
+		return { hash, shortHash, subject, parent: parents?.split(' ')[0] || undefined };
+	});
+	return Promise.all(commits.map(async commit => ({ ...commit, files: await readCommitFiles(repositoryPath, commit.hash) })));
+}
+
+async function readDiffPaths(repositoryPath: string, baseRef: string, headRef: string): Promise<ChangedFile[]> {
+	const { stdout } = await execFileAsync('git', ['-C', repositoryPath, 'diff', '--name-status', '--find-renames', `${baseRef}...${headRef}`], { maxBuffer: 1024 * 1024 });
+	return stdout.trimEnd().split('\n').filter(Boolean).map(line => {
+		const [status = '', firstPath = '', secondPath] = line.split('\t');
+		return { status: status.charAt(0), path: secondPath || firstPath };
+	});
 }
 
 async function readCommitFiles(repositoryPath: string, hash: string): Promise<readonly CommitFile[]> {

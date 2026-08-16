@@ -1,153 +1,67 @@
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+ *---------------------------------------------------------------------------------------------*/
 
-import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { readAgentStates } from './firstmate';
-import { ChangedFile, CommitFile, FleetSummary, GitRepositoryState, LocalCommit, disambiguatedNames, readGitRepository, repositoryStatus, summarizeFleet } from './git';
-import { DeckLabels, DeckRepository, renderFleetDeck } from './deck';
+import { FirstmateTask, readFleetTasks } from './firstmate';
+import { readGitTask } from './git';
+import { DeckLabels, DeckTask, renderFleetDeck } from './deck';
 
-type FleetRepository = DeckRepository;
+const firstmateHome = path.join(process.env['HOME'] || '/home/calliari', 'dpe', 'firstmate');
 
-class RepositoryItem extends vscode.TreeItem {
-	constructor(readonly repository: FleetRepository, label = repository.name) {
-		super(label, repository.error || !repository.path ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
-		this.contextValue = repository.error || !repository.path ? 'gavea.frota.error' : 'gavea.frota.repository';
-		this.description = repository.error
-			? repository.error
-			: `${repository.branch || 'HEAD'} · ${repository.changedFiles === 0 ? 'limpo' : `${repository.changedFiles} arquivo(s) alterado(s)`}${formatSync(repository)}${repository.localCommits?.length ? ` · ${repository.localCommits.length} commit(s) local(is)` : ''}`;
-		this.tooltip = new vscode.MarkdownString(`**${repository.name}**\n\n${repository.path}`);
-		if (repository.agent) {
-			this.description += ` · agente ${repository.agent.id}: ${repository.agent.state}`;
-			this.tooltip.appendMarkdown(`\n\nAgente **${repository.agent.id}**: ${repository.agent.state}${repository.agent.text ? `, ${repository.agent.text}` : ''}`);
+type FleetTask = DeckTask;
+
+class TaskItem extends vscode.TreeItem {
+	constructor(readonly task: FleetTask) {
+		super(task.title, vscode.TreeItemCollapsibleState.None);
+		this.contextValue = 'gavea.frota.task';
+		this.description = task.stateError || `${task.project} · ${task.state}`;
+		this.tooltip = new vscode.MarkdownString(`**${task.title}**\n\nTarefa \`${task.id}\`\n\nProjeto: **${task.project}**`);
+		if (task.holdReason) {
+			this.tooltip.appendMarkdown(`\n\nAguardando: ${task.holdReason}`);
 		}
-		const status = repositoryStatus(repository, Boolean(repository.agent));
-		const icon = status === 'error' ? 'error' : status === 'working' ? 'sync' : status === 'changed' ? 'repo' : 'check';
-		const color = status === 'error' ? 'charts.red' : status === 'working' ? 'charts.blue' : status === 'changed' ? 'charts.yellow' : 'charts.green';
+		if (task.stateError) {
+			this.tooltip.appendMarkdown(`\n\nErro: ${task.stateError}`);
+		}
+		this.command = { command: 'gavea.frota.openTaskDiff', title: 'Abrir Diff da Tarefa', arguments: [this] };
+		const icon = task.stateError ? 'error' : task.backlogSection === 'queued' ? 'warning' : task.backlogSection === 'done' ? 'pass' : 'sync';
+		const color = task.stateError ? 'testing.iconFailed' : task.backlogSection === 'queued' ? 'charts.yellow' : task.backlogSection === 'done' ? 'testing.iconPassed' : 'charts.blue';
 		this.iconPath = new vscode.ThemeIcon(icon, new vscode.ThemeColor(color));
-		if (repository.error) {
-			this.command = { command: 'gavea.frota.configure', title: 'Configurar Repositórios da Frota' };
-		}
 	}
 }
 
-class GroupItem extends vscode.TreeItem {
-	constructor(label: string, readonly children: readonly vscode.TreeItem[], description: string) {
+class TaskGroupItem extends vscode.TreeItem {
+	constructor(label: string, readonly children: readonly TaskItem[], description: string) {
 		super(label, children.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
+		this.contextValue = 'gavea.frota.taskGroup';
 		this.description = description;
-		this.contextValue = 'gavea.frota.group';
 	}
-}
-
-class CommitItem extends vscode.TreeItem {
-	constructor(readonly repository: FleetRepository, readonly commit: LocalCommit) {
-		super(`${commit.shortHash} ${commit.subject}`, commit.files.length ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
-		this.contextValue = 'gavea.frota.commit';
-		this.description = 'não enviado';
-		this.tooltip = `${commit.hash}\n${commit.subject}`;
-		this.iconPath = new vscode.ThemeIcon('git-commit');
-	}
-}
-
-class ChangedFileItem extends vscode.TreeItem {
-	constructor(readonly repository: FleetRepository, readonly file: ChangedFile) {
-		super(file.path, vscode.TreeItemCollapsibleState.None);
-		this.contextValue = 'gavea.frota.changedFile';
-		this.description = file.status;
-		this.command = { command: 'gavea.frota.openChange', title: 'Abrir Diff', arguments: [this] };
-		this.iconPath = new vscode.ThemeIcon('diff');
-	}
-}
-
-class CommitFileItem extends vscode.TreeItem {
-	constructor(readonly repository: FleetRepository, readonly commit: LocalCommit, readonly file: CommitFile) {
-		super(file.path, vscode.TreeItemCollapsibleState.None);
-		this.contextValue = 'gavea.frota.commitFile';
-		this.description = 'conteúdo do commit';
-		this.command = { command: 'gavea.frota.openCommitFile', title: 'Abrir Conteúdo do Commit', arguments: [this] };
-		this.iconPath = new vscode.ThemeIcon('file');
-	}
-}
-
-function formatSync(repository: GitRepositoryState): string {
-	if (repository.ahead === undefined && repository.behind === undefined) {
-		return '';
-	}
-	return ` · upstream +${repository.ahead || 0}/-${repository.behind || 0}`;
-}
-
-function formatFleetSummary(summary: FleetSummary): string {
-	return `$(repo) ${summary.repositories} · $(warning) ${summary.changed} · $(pulse) ${summary.activeAgents}`;
-}
-
-function deckLabels(): DeckLabels {
-	return {
-		title: vscode.l10n.t('Convés Principal'),
-		subtitle: vscode.l10n.t('Acompanhe a frota enquanto os agentes trabalham'),
-		refresh: vscode.l10n.t('Atualizar'),
-		configure: vscode.l10n.t('Configurar frota'),
-		repositories: vscode.l10n.t('repositórios'),
-		changedRepositories: vscode.l10n.t('com alterações'),
-		activeAgents: vscode.l10n.t('agentes ativos'),
-		branch: vscode.l10n.t('Branch'),
-		tree: vscode.l10n.t('Árvore'),
-		clean: vscode.l10n.t('limpa'),
-		changed: vscode.l10n.t('alterada(s)'),
-		ahead: vscode.l10n.t('à frente do remoto'),
-		behind: vscode.l10n.t('atrás do remoto'),
-		agent: vscode.l10n.t('Agente'),
-		noAgent: vscode.l10n.t('Nenhum agente ativo'),
-		localCommits: vscode.l10n.t('Commits locais'),
-		noLocalCommits: vscode.l10n.t('Nenhum commit local não enviado'),
-		pull: vscode.l10n.t('Pull'),
-		push: vscode.l10n.t('Push'),
-		diff: vscode.l10n.t('Abrir diff'),
-		openRepository: vscode.l10n.t('Abrir repositório'),
-		openCommitDiff: vscode.l10n.t('Ver diff'),
-		configureNow: vscode.l10n.t('Configurar agora'),
-		noRepositories: vscode.l10n.t('Nenhum repositório configurado'),
-		error: vscode.l10n.t('indisponível')
-	};
 }
 
 class FleetProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 	private readonly changeEmitter = new vscode.EventEmitter<void>();
 	readonly onDidChangeTreeData = this.changeEmitter.event;
-	private items: RepositoryItem[] = [];
+	private items: TaskGroupItem[] = [];
 
 	getTreeItem(item: vscode.TreeItem): vscode.TreeItem {
 		return item;
 	}
 
 	getChildren(item?: vscode.TreeItem): vscode.TreeItem[] {
-		if (!item) {
-			return this.items;
-		}
-		if (item instanceof RepositoryItem) {
-			if (!item.repository.path) {
-				return [];
-			}
-			const commits = (item.repository.localCommits || []).map(commit => new CommitItem(item.repository, commit));
-			const changedFiles = (item.repository.changedPaths || []).map(file => new ChangedFileItem(item.repository, file));
-			return [
-				new GroupItem('Commits locais', commits, `${commits.length}`),
-				new GroupItem('Alterações', changedFiles, `${changedFiles.length}`)
-			];
-		}
-		if (item instanceof GroupItem) {
-			return [...item.children];
-		}
-		if (item instanceof CommitItem) {
-			return item.commit.files.map(file => new CommitFileItem(item.repository, item.commit, file));
-		}
-		return [];
+		return item instanceof TaskGroupItem ? [...item.children] : item ? [] : this.items;
 	}
 
-	setItems(items: RepositoryItem[]): void {
-		this.items = items;
+	setItems(tasks: readonly FleetTask[]): void {
+		const waiting = tasks.filter(task => isWaiting(task));
+		const progress = tasks.filter(task => !isTerminal(task.state) && !waiting.includes(task) && (task.backlogSection === 'in-flight' || Boolean(task.worktreePath)));
+		const landed = tasks.filter(task => task.backlogSection === 'done' || task.backlogChecked && task.doneAt).slice(0, 10);
+		this.items = [
+			new TaskGroupItem('Esperando você', waiting.map(task => new TaskItem(task)), `${waiting.length}`),
+			new TaskGroupItem('Em andamento', progress.map(task => new TaskItem(task)), `${progress.length}`),
+			new TaskGroupItem('Aterrissadas recentemente', landed.map(task => new TaskItem(task)), `${landed.length}`)
+		];
 		this.changeEmitter.fire();
 	}
 
@@ -163,11 +77,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	context.subscriptions.push(tree);
 	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10);
 	statusBar.command = 'gavea.frota.openDeck';
-	statusBar.tooltip = 'Frota: repositórios · alterações · agentes ativos';
+	statusBar.tooltip = 'Frota: tarefas aguardando, em andamento e aterrissadas';
 	statusBar.show();
 	context.subscriptions.push(statusBar);
 	let deckPanel: vscode.WebviewPanel | undefined;
-	let latestRepositories: FleetRepository[] = [];
+	let latestTasks: FleetTask[] = [];
 	let refreshing = false;
 
 	const refresh = async (): Promise<void> => {
@@ -176,44 +90,28 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		}
 		refreshing = true;
 		try {
-			const configuration = vscode.workspace.getConfiguration('gavea.frota');
-			const configuredPaths = configuration.get<string[]>('repositorios', []).map(expandHome);
-			if (configuredPaths.length === 0) {
-				latestRepositories = [];
-				provider.setItems([emptyItem()]);
-				statusBar.text = formatFleetSummary({ repositories: 0, changed: 0, activeAgents: 0 });
-				if (deckPanel) {
-					deckPanel.webview.html = renderFleetDeck([], { repositories: 0, changed: 0, activeAgents: 0 }, deckLabels());
+			const snapshot = await readFleetTasks(firstmateHome);
+			const tasks = await Promise.all(snapshot.tasks.map(async task => {
+				if (!task.worktreePath) {
+					return task;
 				}
-				return;
-			}
-			ensureWorkspaceFolders(configuredPaths);
-			const home = expandHome(configuration.get<string>('firstmateHome', '~/dpe/firstmate'));
-			const agents = await readAgentStates(home);
-			const repositories: FleetRepository[] = await Promise.all(configuredPaths.map(async (repositoryPath): Promise<FleetRepository> => {
-				const state = await readGitRepository(repositoryPath);
-				if (state.error) {
-					return state;
-				}
-				try {
-					return { ...state, agent: agents.get(await fs.realpath(repositoryPath)) };
-				} catch {
-					return state;
-				}
+				const git = await readGitTask(task.worktreePath, task.projectPath);
+				return { ...task, git };
 			}));
-			latestRepositories = repositories;
-			const names = disambiguatedNames(repositories);
-			provider.setItems(repositories.map((repository, index) => new RepositoryItem(repository, names[index])));
-			const activeAgentPaths = new Set(repositories.filter(repository => repository.agent).map(repository => repository.path));
-			const summary = summarizeFleet(repositories, activeAgentPaths);
-			statusBar.text = formatFleetSummary(summary);
+			latestTasks = tasks;
+			provider.setItems(tasks);
+			const waiting = tasks.filter(task => isWaiting(task)).length;
+			const progress = tasks.filter(task => !isTerminal(task.state) && !isWaiting(task) && (task.backlogSection === 'in-flight' || Boolean(task.worktreePath))).length;
+			const landed = tasks.filter(task => task.backlogSection === 'done').length;
+			statusBar.text = `$(warning) ${waiting} · $(pulse) ${progress} · $(check) ${landed}`;
 			if (deckPanel) {
-				deckPanel.webview.html = renderFleetDeck(repositories, summary, deckLabels());
+				deckPanel.webview.html = renderFleetDeck(tasks, snapshot.error, deckLabels());
 			}
 		} finally {
 			refreshing = false;
 		}
 	};
+
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.refresh', refresh));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openDeck', () => {
 		if (deckPanel) {
@@ -224,56 +122,32 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 			enableScripts: true,
 			retainContextWhenHidden: true
 		});
-		deckPanel.webview.html = renderFleetDeck([], { repositories: 0, changed: 0, activeAgents: 0 }, deckLabels());
+		deckPanel.webview.html = renderFleetDeck([], undefined, deckLabels());
 		deckPanel.onDidDispose(() => {
 			deckPanel = undefined;
 			updateTimer();
 		}, undefined, context.subscriptions);
-		deckPanel.webview.onDidReceiveMessage(message => void handleDeckMessage(message, latestRepositories, refresh), undefined, context.subscriptions);
+		deckPanel.webview.onDidReceiveMessage(message => void handleDeckMessage(message, () => latestTasks, refresh), undefined, context.subscriptions);
 		deckPanel.onDidChangeViewState(() => updateTimer());
 		void refresh();
 		updateTimer();
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.focus', () => vscode.commands.executeCommand('gavea.frota.openDeck')));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.configure', () => vscode.commands.executeCommand('workbench.action.openSettings', '@ext:gavea.gavea-frota')));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.pull', async (item: RepositoryItem) => {
-		if (item instanceof RepositoryItem) {
-			await executeNativeGitAction(item.repository, 'git.pull', 'Pull');
-			await refresh();
+	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openTaskDiff', async (item: TaskItem) => {
+		if (item instanceof TaskItem) {
+			await openTaskDiff(item.task);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.push', async (item: RepositoryItem) => {
-		if (item instanceof RepositoryItem) {
-			await executeNativeGitAction(item.repository, 'git.push', 'Push');
-			await refresh();
+	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openTaskWorktree', async (item: TaskItem) => {
+		if (item instanceof TaskItem) {
+			await openTaskWorktree(item.task);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openChange', async (item: ChangedFileItem) => {
-		if (item instanceof ChangedFileItem) {
-			await vscode.commands.executeCommand('git.openChange', vscode.Uri.file(path.join(item.repository.path, item.file.path)));
+	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openTaskSourceControl', async (item: TaskItem) => {
+		if (item instanceof TaskItem) {
+			await openTaskSourceControl(item.task);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openCommitDiff', async (item: CommitItem) => {
-		if (item instanceof CommitItem) {
-			await openCommitDiff(item.repository, item.commit);
-		}
-	}));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openCommitFile', async (item: CommitFileItem) => {
-		if (item instanceof CommitFileItem) {
-			await vscode.commands.executeCommand('vscode.open', gitUri(path.join(item.repository.path, item.file.path), item.commit.hash));
-		}
-	}));
-	let timer: ReturnType<typeof setInterval> | undefined;
-	const updateTimer = (): void => {
-		if ((tree.visible || deckPanel?.visible) && vscode.window.state.focused) {
-			clearInterval(timer);
-			const seconds = Math.max(1, vscode.workspace.getConfiguration('gavea.frota').get<number>('intervaloAtualizacao', 10));
-			timer = setInterval(() => void refresh(), seconds * 1000);
-		} else {
-			clearInterval(timer);
-			timer = undefined;
-		}
-	};
 	context.subscriptions.push(tree.onDidChangeVisibility(() => {
 		updateTimer();
 		if (tree.visible) {
@@ -287,11 +161,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		}
 	}));
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
-		if (event.affectsConfiguration('gavea.frota')) {
+		if (event.affectsConfiguration('gavea.frota.intervaloAtualizacao')) {
 			updateTimer();
 			void refresh();
 		}
 	}));
+	let timer: ReturnType<typeof setInterval> | undefined;
+	const updateTimer = (): void => {
+		if ((tree.visible || deckPanel?.visible) && vscode.window.state.focused) {
+			clearInterval(timer);
+			const seconds = Math.max(1, vscode.workspace.getConfiguration('gavea.frota').get<number>('intervaloAtualizacao', 10));
+			timer = setInterval(() => void refresh(), seconds * 1000);
+		} else {
+			clearInterval(timer);
+			timer = undefined;
+		}
+	};
 	context.subscriptions.push({ dispose: () => clearInterval(timer) });
 	await refresh();
 	updateTimer();
@@ -299,100 +184,145 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 interface DeckMessage {
 	readonly type: string;
-	readonly repositoryPath?: string;
-	readonly commitHash?: string;
+	readonly taskId?: string;
 }
 
-async function handleDeckMessage(message: DeckMessage, repositories: readonly FleetRepository[], refresh: () => Promise<void>): Promise<void> {
+interface GitRepositoryApi {
+	readonly rootUri?: vscode.Uri;
+}
+
+interface GitApi {
+	readonly openRepository: (root: vscode.Uri) => Promise<GitRepositoryApi | null>;
+	readonly toGitUri: (uri: vscode.Uri, ref: string) => vscode.Uri;
+}
+
+interface GitExtension {
+	readonly getAPI: (version: 1) => GitApi;
+}
+
+async function handleDeckMessage(message: DeckMessage, tasks: () => readonly FleetTask[], refresh: () => Promise<void>): Promise<void> {
 	if (message.type === 'refresh') {
 		await refresh();
 		return;
 	}
-	if (message.type === 'configure') {
-		await vscode.commands.executeCommand('gavea.frota.configure');
-		return;
-	}
-	const repository = repositories.find(candidate => candidate.path === message.repositoryPath);
-	if (!repository) {
+	const task = tasks().find(candidate => candidate.id === message.taskId);
+	if (!task) {
 		return;
 	}
 	switch (message.type) {
-		case 'pull':
-			await executeNativeGitAction(repository, 'git.pull', 'Pull');
-			await refresh();
+		case 'diff':
+			await openTaskDiff(task);
 			break;
-		case 'push':
-			await executeNativeGitAction(repository, 'git.push', 'Push');
-			await refresh();
+		case 'openWorktree':
+			await openTaskWorktree(task);
 			break;
-		case 'openRepository':
-			await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(repository.path));
+		case 'sourceControl':
+			await openTaskSourceControl(task);
 			break;
-		case 'diff': {
-			const file = repository.changedPaths?.[0];
-			if (file) {
-				await vscode.commands.executeCommand('git.openChange', vscode.Uri.file(path.join(repository.path, file.path)));
-			}
-			break;
-		}
-		case 'openCommitDiff': {
-			const commit = repository.localCommits?.find(candidate => candidate.hash === message.commitHash);
-			if (commit) {
-				await openCommitDiff(repository, commit);
-			}
-			break;
-		}
 	}
 }
 
-async function executeNativeGitAction(repository: FleetRepository, command: 'git.pull' | 'git.push', label: string): Promise<void> {
-	try {
-		await vscode.commands.executeCommand(command, vscode.Uri.file(repository.path));
-		await vscode.window.showInformationMessage(`${label} solicitado para ${repository.name}`);
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		await vscode.window.showErrorMessage(`Não foi possível executar ${label} em ${repository.name}: ${message}`);
-	}
-}
-
-async function openCommitDiff(repository: FleetRepository, commit: LocalCommit): Promise<void> {
-	if (commit.files.length === 0) {
-		await vscode.window.showInformationMessage(`O commit ${commit.shortHash} não possui arquivos alterados`);
+async function openTaskWorktree(task: FleetTask): Promise<void> {
+	if (!task.worktreePath) {
+		await vscode.window.showErrorMessage(`A cópia de trabalho da tarefa ${task.id} não está registrada.`);
 		return;
 	}
-	const resources = commit.files.map(file => ({
-		originalUri: file.status === 'A' ? undefined : gitUri(path.join(repository.path, file.originalPath || file.path), commit.parent || `${commit.hash}^`),
-		modifiedUri: file.status === 'D' ? undefined : gitUri(path.join(repository.path, file.path), commit.hash)
-	}));
-	await vscode.commands.executeCommand('_workbench.openMultiDiffEditor', {
-		multiDiffSourceUri: vscode.Uri.from({ scheme: 'git-ref-compare', path: `${repository.path}/${commit.hash}` }),
-		title: `${commit.shortHash} ${commit.subject}`,
-		resources
-	});
-}
-
-function gitUri(filePath: string, ref: string): vscode.Uri {
-	return vscode.Uri.file(filePath).with({ scheme: 'git', query: JSON.stringify({ path: filePath, ref }) });
-}
-
-function ensureWorkspaceFolders(configuredPaths: readonly string[]): void {
-	const currentPaths = new Set((vscode.workspace.workspaceFolders || []).map(folder => path.resolve(folder.uri.fsPath)));
-	const additions = configuredPaths
-		.map(expandHome)
-		.filter(repositoryPath => !currentPaths.has(path.resolve(repositoryPath)))
-		.map(repositoryPath => ({ uri: vscode.Uri.file(repositoryPath), name: path.basename(repositoryPath) }));
-	if (additions.length > 0) {
-		vscode.workspace.updateWorkspaceFolders(vscode.workspace.workspaceFolders?.length || 0, 0, ...additions);
+	try {
+		await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(task.worktreePath));
+	} catch (error) {
+		await showTaskError(task, error);
 	}
 }
 
-function emptyItem(): RepositoryItem {
-	const item = new RepositoryItem({ path: '', name: 'Nenhum repositório configurado' });
-	item.description = 'Configurar agora';
-	item.command = { command: 'gavea.frota.configure', title: 'Configurar Repositórios da Frota' };
-	return item;
+async function openTaskSourceControl(task: FleetTask): Promise<void> {
+	await openTaskWorktree(task);
+	if (task.worktreePath) {
+		await vscode.commands.executeCommand('workbench.view.scm');
+	}
 }
 
-function expandHome(value: string): string {
-	return value.startsWith('~/') ? path.join(process.env['HOME'] || '', value.slice(2)) : value;
+async function openTaskDiff(task: FleetTask): Promise<void> {
+	const git = task.git;
+	if (!git) {
+		await vscode.window.showErrorMessage(`Não há cópia de trabalho disponível para a tarefa ${task.id}.`);
+		return;
+	}
+	if (git.error) {
+		await vscode.window.showErrorMessage(`Não foi possível abrir o diff de ${task.id}: ${git.error}`);
+		return;
+	}
+	if (!git.baseRef || !git.headRef || git.changedPaths.length === 0) {
+		await vscode.window.showInformationMessage(`A tarefa ${task.id} ainda não tem arquivos alterados contra ${git.baseBranch || 'a base'}.`);
+		return;
+	}
+	const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git');
+	const gitApi = gitExtension ? (gitExtension.isActive ? gitExtension.exports : await gitExtension.activate())?.getAPI(1) : undefined;
+	if (!gitApi) {
+		await vscode.window.showErrorMessage('O Source Control nativo do VS Code não está disponível para abrir este diff.');
+		return;
+	}
+	try {
+		await gitApi.openRepository(vscode.Uri.file(git.path));
+		const resources = git.changedPaths.map(file => ({
+			originalUri: file.status === 'A' ? undefined : gitApi.toGitUri(vscode.Uri.file(path.join(git.path, file.path)), git.baseRef as string),
+			modifiedUri: file.status === 'D' ? undefined : gitApi.toGitUri(vscode.Uri.file(path.join(git.path, file.path)), git.headRef as string)
+		}));
+		await vscode.commands.executeCommand('_workbench.openMultiDiffEditor', {
+			multiDiffSourceUri: vscode.Uri.from({ scheme: 'git-ref-compare', path: `${git.path}/${git.headRef}` }),
+			title: `${task.title} · ${git.branch || task.id}`,
+			resources
+		});
+	} catch (error) {
+		await showTaskError(task, error);
+	}
+}
+
+async function showTaskError(task: FleetTask, error: unknown): Promise<void> {
+	const message = error instanceof Error ? error.message : String(error);
+	await vscode.window.showErrorMessage(`Não foi possível abrir ${task.id}: ${message}`);
+}
+
+function isTerminal(state: string): boolean {
+	return ['done', 'failed', 'cancelled', 'stopped'].includes(state.toLowerCase());
+}
+
+function isWaiting(task: FirstmateTask): boolean {
+	return task.backlogSection === 'queued' || Boolean(task.holdReason) || ['paused', 'blocked', 'needs-decision'].includes(task.state.toLowerCase());
+}
+
+function deckLabels(): DeckLabels {
+	return {
+		title: vscode.l10n.t('Convés Principal'),
+		subtitle: vscode.l10n.t('Veja o que a frota está fazendo e decida o que entra'),
+		refresh: vscode.l10n.t('Atualizar'),
+		waiting: vscode.l10n.t('Esperando você'),
+		waitingDescription: vscode.l10n.t('Tarefas paradas com uma decisão ou motivo exposto'),
+		progress: vscode.l10n.t('Em andamento'),
+		progressDescription: vscode.l10n.t('Trabalho vivo nas cópias descartáveis dos agentes'),
+		landed: vscode.l10n.t('Aterrissadas recentemente'),
+		landedDescription: vscode.l10n.t('O que entrou na frota e o resultado registrado'),
+		task: vscode.l10n.t('Tarefa'),
+		project: vscode.l10n.t('Projeto'),
+		agent: vscode.l10n.t('Agente'),
+		doing: vscode.l10n.t('Fazendo'),
+		elapsed: vscode.l10n.t('Tempo'),
+		branch: vscode.l10n.t('Branch'),
+		worktree: vscode.l10n.t('Cópia'),
+		commits: vscode.l10n.t('Commits'),
+		files: vscode.l10n.t('Arquivos'),
+		base: vscode.l10n.t('Base'),
+		reason: vscode.l10n.t('Motivo'),
+		result: vscode.l10n.t('Resultado'),
+		landedAt: vscode.l10n.t('entrou'),
+		openDiff: vscode.l10n.t('Abrir diff da branch'),
+		openWorktree: vscode.l10n.t('Abrir cópia'),
+		openSourceControl: vscode.l10n.t('Source Control'),
+		noTasks: vscode.l10n.t('Nenhuma tarefa neste bloco.'),
+		unavailable: vscode.l10n.t('indisponível'),
+		stateError: vscode.l10n.t('Erro de estado'),
+		noReason: vscode.l10n.t('O estado não trouxe um motivo.'),
+		noResult: vscode.l10n.t('O backlog não registrou um resultado.'),
+		noWorktree: vscode.l10n.t('Cópia de trabalho não encontrada'),
+		dataError: vscode.l10n.t('Dados da frota')
+	};
 }

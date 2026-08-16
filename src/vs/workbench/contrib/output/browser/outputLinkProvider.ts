@@ -108,10 +108,10 @@ class OutputLinkWorkerClient extends Disposable {
 			})
 		));
 		this._workerTextModelSyncClient = this._register(WorkerTextModelSyncClient.create(this._workerClient, modelService));
-		this._initializeBarrier = this._ensureWorkspaceFolders();
+		this._initializeBarrier = this._initializeWorkspaceFolders();
 	}
 
-	private async _ensureWorkspaceFolders(): Promise<void> {
+	private async _initializeWorkspaceFolders(): Promise<void> {
 		await this._workerClient.proxy.$setWorkspaceFolders(this.contextService.getWorkspace().folders.map(folder => folder.uri.toString()));
 	}
 

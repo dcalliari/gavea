@@ -1,48 +1,55 @@
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+ *---------------------------------------------------------------------------------------------*/
 
-import { AgentState } from './firstmate';
-import { FleetSummary, GitRepositoryState, LocalCommit } from './git';
+import { FirstmateTask } from './firstmate';
+import { TaskGitState } from './git';
 
-export interface DeckRepository extends GitRepositoryState {
-	readonly agent?: AgentState;
+export interface DeckTask extends FirstmateTask {
+	readonly git?: TaskGitState;
 }
 
 export interface DeckLabels {
 	readonly title: string;
 	readonly subtitle: string;
 	readonly refresh: string;
-	readonly configure: string;
-	readonly repositories: string;
-	readonly changedRepositories: string;
-	readonly activeAgents: string;
-	readonly branch: string;
-	readonly tree: string;
-	readonly clean: string;
-	readonly changed: string;
-	readonly ahead: string;
-	readonly behind: string;
+	readonly waiting: string;
+	readonly waitingDescription: string;
+	readonly progress: string;
+	readonly progressDescription: string;
+	readonly landed: string;
+	readonly landedDescription: string;
+	readonly task: string;
+	readonly project: string;
 	readonly agent: string;
-	readonly noAgent: string;
-	readonly localCommits: string;
-	readonly noLocalCommits: string;
-	readonly pull: string;
-	readonly push: string;
-	readonly diff: string;
-	readonly openRepository: string;
-	readonly openCommitDiff: string;
-	readonly configureNow: string;
-	readonly noRepositories: string;
-	readonly error: string;
+	readonly doing: string;
+	readonly elapsed: string;
+	readonly branch: string;
+	readonly worktree: string;
+	readonly commits: string;
+	readonly files: string;
+	readonly base: string;
+	readonly reason: string;
+	readonly result: string;
+	readonly landedAt: string;
+	readonly openDiff: string;
+	readonly openWorktree: string;
+	readonly openSourceControl: string;
+	readonly noTasks: string;
+	readonly unavailable: string;
+	readonly stateError: string;
+	readonly noReason: string;
+	readonly noResult: string;
+	readonly noWorktree: string;
+	readonly dataError: string;
 }
 
-export function renderFleetDeck(repositories: readonly DeckRepository[], summary: FleetSummary, labels: DeckLabels): string {
+export function renderFleetDeck(tasks: readonly DeckTask[], dataError: string | undefined, labels: DeckLabels): string {
 	const nonce = createNonce();
-	const cards = repositories.length === 0
-		? `<section class="empty"><h2>${escapeHtml(labels.noRepositories)}</h2><button data-action="configure">${escapeHtml(labels.configureNow)}</button></section>`
-		: repositories.map(repository => renderRepository(repository, labels)).join('');
+	const waiting = tasks.filter(task => isWaiting(task));
+	const progress = tasks.filter(task => !isTerminal(task.state) && !waiting.includes(task) && (task.backlogSection === 'in-flight' || Boolean(task.worktreePath)));
+	const landed = tasks.filter(task => task.backlogSection === 'done' || task.backlogChecked && task.doneAt).slice(0, 10);
 	return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -51,163 +58,119 @@ export function renderFleetDeck(repositories: readonly DeckRepository[], summary
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
 <title>${escapeHtml(labels.title)}</title>
 <style>
-:root {
-	color-scheme: light dark;
-	font-family: var(--vscode-font-family);
-	font-size: var(--vscode-font-size);
-}
+:root { color-scheme: light dark; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); }
 * { box-sizing: border-box; }
-body {
-	margin: 0;
-	padding: 24px 28px 40px;
-	color: var(--vscode-foreground);
-	background: var(--vscode-editor-background);
-	overflow-x: hidden;
-}
-button {
-	font: inherit;
-	color: var(--vscode-button-foreground);
-	background: var(--vscode-button-background);
-	border: 1px solid transparent;
-	border-radius: 2px;
-	padding: 4px 9px;
-	cursor: pointer;
-}
+body { margin: 0; padding: 20px 28px 36px; color: var(--vscode-foreground); background: var(--vscode-editor-background); }
+button { font: inherit; color: var(--vscode-button-foreground); background: var(--vscode-button-background); border: 1px solid transparent; border-radius: 2px; padding: 4px 9px; cursor: pointer; white-space: nowrap; }
 button:hover { background: var(--vscode-button-hoverBackground); }
 button:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: 2px; }
-button.secondary {
-	color: var(--vscode-foreground);
-	background: var(--vscode-input-background);
-	border-color: var(--vscode-input-border, var(--vscode-widget-border));
-}
+button.secondary { color: var(--vscode-foreground); background: var(--vscode-input-background); border-color: var(--vscode-input-border, var(--vscode-widget-border)); }
 button.secondary:hover { background: var(--vscode-list-hoverBackground); }
 button[disabled] { opacity: .5; cursor: default; }
-.deck-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 24px;
-	max-width: 1600px;
-	margin: 0 auto 22px;
-}
-h1 { margin: 0 0 5px; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.deck-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin: 0 auto 18px; max-width: 1800px; }
+.eyebrow { margin: 0 0 4px; color: var(--vscode-textLink-foreground); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
 .subtitle { margin: 0; color: var(--vscode-descriptionForeground); }
-.header-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
-.summary {
-	display: flex;
-	gap: 1px;
-	max-width: 1600px;
-	margin: 0 auto 20px;
-	border: 1px solid var(--vscode-panel-border);
-	background: var(--vscode-panel-border);
-}
-.summary-item { flex: 1; min-width: 130px; padding: 10px 14px; background: var(--vscode-sideBar-background); }
-.summary-value { display: block; font-size: 19px; font-weight: 600; }
-.summary-label { color: var(--vscode-descriptionForeground); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
-.fleet-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 390px), 1fr));
-	gap: 14px;
-	max-width: 1600px;
-	margin: 0 auto;
-}
-.repository {
-	min-width: 0;
-	border: 1px solid var(--vscode-panel-border);
-	border-top: 3px solid var(--vscode-testing-iconPassed);
-	background: var(--vscode-sideBar-background);
-}
-.repository.working { border-top-color: var(--vscode-charts-blue); }
-.repository.changed { border-top-color: var(--vscode-charts-yellow); }
-.repository.error { border-top-color: var(--vscode-testing-iconFailed); }
-.repo-header { display: flex; justify-content: space-between; gap: 12px; padding: 13px 14px 9px; }
-.repo-heading { min-width: 0; }
-.repo-name { min-width: 0; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.repo-path { margin-top: 3px; color: var(--vscode-descriptionForeground); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.status { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 45%; flex-shrink: 0; overflow: hidden; color: var(--vscode-descriptionForeground); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--vscode-testing-iconPassed); }
-.working .status-dot { background: var(--vscode-charts-blue); }
-.changed .status-dot { background: var(--vscode-charts-yellow); }
-.error .status-dot { background: var(--vscode-testing-iconFailed); }
-.repo-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 14px 12px; color: var(--vscode-descriptionForeground); font-size: 12px; }
-.repo-meta span { min-width: 0; }
-.repo-meta .repo-value { overflow-wrap: anywhere; }
-.repo-meta strong { color: var(--vscode-foreground); font-weight: 500; }
-.agent {
-	margin: 0 14px 12px;
-	padding: 9px 10px;
-	border-left: 2px solid var(--vscode-charts-blue);
-	background: var(--vscode-textBlockQuote-background);
-}
-.agent-label { color: var(--vscode-descriptionForeground); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
-.agent-name { margin-top: 2px; font-weight: 600; overflow-wrap: anywhere; }
-.agent-state { color: var(--vscode-textLink-foreground); }
-.agent-text { margin-top: 3px; color: var(--vscode-descriptionForeground); font-size: 12px; overflow-wrap: anywhere; }
-.no-agent { border-left-color: var(--vscode-panel-border); color: var(--vscode-descriptionForeground); }
-.sync {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 1px;
-	margin: 0 14px 12px;
-	background: var(--vscode-panel-border);
-}
-.sync-item { padding: 7px 9px; background: var(--vscode-editor-background); }
-.sync-value { display: block; font-weight: 600; }
-.sync-label { color: var(--vscode-descriptionForeground); font-size: 11px; }
-.section { border-top: 1px solid var(--vscode-panel-border); padding: 10px 14px 8px; }
-.section-heading { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--vscode-descriptionForeground); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
-.commit { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 0; }
-.commit-hash { flex-shrink: 0; color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); font-size: 11px; }
-.commit-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-.commit button { margin-left: auto; flex-shrink: 0; padding: 2px 7px; font-size: 11px; }
-.empty { max-width: 540px; margin: 80px auto; padding: 32px; text-align: center; border: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); }
-.empty h2 { margin: 0 0 18px; font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
-.error-message { margin: 0 14px 14px; color: var(--vscode-errorForeground); font-size: 12px; }
-@media (max-width: 700px) { body { padding: 16px; } .deck-header { flex-direction: column; } .summary { flex-wrap: wrap; } .summary-item { min-width: calc(50% - 1px); } }
+.header-actions { display: flex; flex-wrap: wrap; gap: 7px; flex-shrink: 0; }
+.data-error { margin: 0 auto 14px; max-width: 1800px; padding: 9px 12px; border-left: 3px solid var(--vscode-testing-iconFailed); color: var(--vscode-errorForeground); background: var(--vscode-inputValidation-errorBackground); }
+.lane { max-width: 1800px; margin: 0 auto 16px; border: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); }
+.lane.waiting { border-top: 3px solid var(--vscode-charts-yellow); }
+.lane.progress { border-top: 3px solid var(--vscode-charts-blue); }
+.lane.landed { border-top: 3px solid var(--vscode-testing-iconPassed); }
+.lane-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding: 11px 14px 9px; border-bottom: 1px solid var(--vscode-panel-border); }
+.lane-title { margin: 0; font-size: 14px; font-weight: 600; }
+.lane-title::before { content: ' '; display: inline-block; width: 7px; height: 7px; margin: 0 8px 2px 0; border-radius: 50%; background: var(--vscode-charts-blue); }
+.waiting .lane-title::before { background: var(--vscode-charts-yellow); }
+.landed .lane-title::before { background: var(--vscode-testing-iconPassed); }
+.lane-description { margin: 2px 0 0; color: var(--vscode-descriptionForeground); font-size: 12px; }
+.lane-count { color: var(--vscode-descriptionForeground); font-family: var(--vscode-editor-font-family); font-size: 12px; }
+.task-row { display: grid; grid-template-columns: minmax(260px, 2.1fr) minmax(190px, 1.1fr) minmax(240px, 1.3fr) auto; gap: 14px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--vscode-panel-border); }
+.task-row:last-child { border-bottom: 0; }
+.task-row:hover { background: var(--vscode-list-hoverBackground); }
+.task-title { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.task-id { display: block; margin-top: 3px; color: var(--vscode-descriptionForeground); font-family: var(--vscode-editor-font-family); font-size: 11px; overflow-wrap: anywhere; }
+.task-project, .task-muted { color: var(--vscode-descriptionForeground); font-size: 12px; overflow-wrap: anywhere; }
+.task-reason { margin-top: 4px; color: var(--vscode-foreground); font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+.task-reason strong { color: var(--vscode-textLink-foreground); font-weight: 500; }
+.task-fields { display: flex; flex-wrap: wrap; gap: 5px 13px; align-items: baseline; }
+.task-field { min-width: 0; color: var(--vscode-descriptionForeground); font-size: 11px; }
+.task-field strong { color: var(--vscode-foreground); font-weight: 500; overflow-wrap: anywhere; }
+.task-doing { margin-top: 4px; color: var(--vscode-textLink-foreground); font-size: 12px; overflow-wrap: anywhere; }
+.task-error { margin-top: 4px; color: var(--vscode-errorForeground); font-size: 12px; overflow-wrap: anywhere; }
+.task-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.task-actions button { font-size: 12px; }
+.task-actions .primary { font-weight: 600; }
+.empty-lane { padding: 14px; color: var(--vscode-descriptionForeground); font-size: 12px; }
+@media (max-width: 1000px) { .task-row { grid-template-columns: 1fr 1fr; } .task-actions { justify-content: flex-start; } }
+@media (max-width: 650px) { body { padding: 14px; } .deck-header { flex-direction: column; } .task-row { grid-template-columns: 1fr; gap: 7px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
 <header class="deck-header">
-	<div><h1>${escapeHtml(labels.title)}</h1><p class="subtitle">${escapeHtml(labels.subtitle)}</p></div>
-	<div class="header-actions"><button class="secondary" data-action="refresh">${escapeHtml(labels.refresh)}</button><button data-action="configure">${escapeHtml(labels.configure)}</button></div>
+	<div><p class="eyebrow">Gávea / observação</p><h1>${escapeHtml(labels.title)}</h1><p class="subtitle">${escapeHtml(labels.subtitle)}</p></div>
+	<div class="header-actions"><button class="secondary" data-action="refresh">${escapeHtml(labels.refresh)}</button></div>
 </header>
-<section class="summary" aria-label="${escapeHtml(labels.title)}">
-	<div class="summary-item"><span class="summary-value">${summary.repositories}</span><span class="summary-label">${escapeHtml(labels.repositories)}</span></div>
-	<div class="summary-item"><span class="summary-value">${summary.changed}</span><span class="summary-label">${escapeHtml(labels.changedRepositories)}</span></div>
-	<div class="summary-item"><span class="summary-value">${summary.activeAgents}</span><span class="summary-label">${escapeHtml(labels.activeAgents)}</span></div>
-</section>
-<main class="fleet-grid">${cards}</main>
+${dataError ? `<p class="data-error"><strong>${escapeHtml(labels.dataError)}</strong> ${escapeHtml(dataError)}</p>` : ''}
+<main>
+	${renderLane('waiting', labels.waiting, labels.waitingDescription, waiting, labels)}
+	${renderLane('progress', labels.progress, labels.progressDescription, progress, labels)}
+	${renderLane('landed', labels.landed, labels.landedDescription, landed, labels)}
+</main>
 <script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
 document.addEventListener('click', event => {
 	const target = event.target instanceof Element ? event.target.closest('[data-action]') : null;
 	if (!target || target.hasAttribute('disabled')) return;
-	const message = { type: target.getAttribute('data-action'), repositoryPath: target.getAttribute('data-repository'), commitHash: target.getAttribute('data-commit') };
-	vscode.postMessage(message);
+	vscode.postMessage({ type: target.getAttribute('data-action'), taskId: target.getAttribute('data-task') });
 });
 </script>
 </body>
 </html>`;
 }
 
-function renderRepository(repository: DeckRepository, labels: DeckLabels): string {
-	const status = repository.error ? 'error' : repository.agent ? 'working' : repository.changedFiles ? 'changed' : 'clean';
-	const statusLabel = repository.error || (repository.agent ? repository.agent.state : repository.changedFiles ? labels.changed : labels.clean);
-	const commits = (repository.localCommits || []).slice(0, 5).map(commit => renderCommit(repository, commit, labels)).join('');
-	const hasChanges = Boolean(repository.changedPaths?.length);
-	return `<article class="repository ${status}">
-	<header class="repo-header"><div class="repo-heading"><div class="repo-name" title="${escapeHtml(repository.name)}">${escapeHtml(repository.name)}</div><div class="repo-path" title="${escapeHtml(repository.path)}">${escapeHtml(repository.path)}</div></div><div class="status"><span class="status-dot"></span>${escapeHtml(statusLabel)}</div></header>
-	<div class="repo-meta"><span>${escapeHtml(labels.branch)} <strong class="repo-value">${escapeHtml(repository.branch || 'HEAD')}</strong></span><span>${escapeHtml(labels.tree)} <strong>${repository.error ? labels.error : hasChanges ? `${repository.changedFiles} ${labels.changed}` : labels.clean}</strong></span></div>
-	${repository.agent ? `<section class="agent"><div class="agent-label">${escapeHtml(labels.agent)}</div><div class="agent-name">${escapeHtml(repository.agent.id)} <span class="agent-state">· ${escapeHtml(repository.agent.state)}</span></div>${repository.agent.text ? `<div class="agent-text">${escapeHtml(repository.agent.text)}</div>` : ''}</section>` : `<section class="agent no-agent"><div class="agent-label">${escapeHtml(labels.agent)}</div><div>${escapeHtml(labels.noAgent)}</div></section>`}
-	<section class="sync"><div class="sync-item"><span class="sync-value">${repository.ahead || 0}</span><span class="sync-label">${escapeHtml(labels.ahead)}</span></div><div class="sync-item"><span class="sync-value">${repository.behind || 0}</span><span class="sync-label">${escapeHtml(labels.behind)}</span></div></section>
-	<section class="section"><div class="section-heading"><span>${escapeHtml(labels.localCommits)}</span><span>${repository.localCommits?.length || 0}</span></div>${commits || `<div class="commit-subject">${escapeHtml(labels.noLocalCommits)}</div>`}</section>
-	<footer class="section"><div class="header-actions"><button class="secondary" data-action="pull" data-repository="${escapeHtml(repository.path)}">${escapeHtml(labels.pull)}</button><button class="secondary" data-action="push" data-repository="${escapeHtml(repository.path)}">${escapeHtml(labels.push)}</button><button class="secondary" data-action="diff" data-repository="${escapeHtml(repository.path)}" ${hasChanges ? '' : 'disabled'}>${escapeHtml(labels.diff)}</button><button data-action="openRepository" data-repository="${escapeHtml(repository.path)}">${escapeHtml(labels.openRepository)}</button></div></footer>
-	${repository.error ? `<p class="error-message">${escapeHtml(repository.error)}</p>` : ''}
-</article>`;
+function renderLane(kind: 'waiting' | 'progress' | 'landed', title: string, description: string, tasks: readonly DeckTask[], labels: DeckLabels): string {
+	return `<section class="lane ${kind}"><header class="lane-heading"><div><h2 class="lane-title">${escapeHtml(title)}</h2><p class="lane-description">${escapeHtml(description)}</p></div><span class="lane-count">${tasks.length}</span></header>${tasks.length ? tasks.map(task => renderTask(kind, task, labels)).join('') : `<div class="empty-lane">${escapeHtml(labels.noTasks)}</div>`}</section>`;
 }
 
-function renderCommit(repository: DeckRepository, commit: LocalCommit, labels: DeckLabels): string {
-	return `<div class="commit"><span class="commit-hash">${escapeHtml(commit.shortHash)}</span><span class="commit-subject" title="${escapeHtml(commit.subject)}">${escapeHtml(commit.subject)}</span><button class="secondary" data-action="openCommitDiff" data-repository="${escapeHtml(repository.path)}" data-commit="${escapeHtml(commit.hash)}">${escapeHtml(labels.openCommitDiff)}</button></div>`;
+function renderTask(kind: 'waiting' | 'progress' | 'landed', task: DeckTask, labels: DeckLabels): string {
+	const git = task.git;
+	const worktreeAvailable = Boolean(task.worktreePath && !git?.error);
+	const actionTitle = git?.error || task.stateError || (!task.worktreePath && kind !== 'waiting' ? labels.noWorktree : undefined);
+	if (kind === 'waiting') {
+		return `<article class="task-row"><div><div class="task-title">${escapeHtml(task.title)}</div><span class="task-id">${escapeHtml(task.id)}</span></div><div class="task-project">${escapeHtml(labels.project)} <strong>${escapeHtml(task.project)}</strong></div><div><div class="task-reason"><strong>${escapeHtml(labels.reason)}:</strong> ${escapeHtml(task.holdReason || task.text || task.stateError || task.git?.error || labels.noReason)}</div></div>${renderActions(task, worktreeAvailable, labels, actionTitle)}</article>`;
+	}
+	if (kind === 'landed') {
+		return `<article class="task-row"><div><div class="task-title">${escapeHtml(task.title)}</div><span class="task-id">${escapeHtml(task.id)}</span></div><div class="task-project">${escapeHtml(labels.project)} <strong>${escapeHtml(task.project)}</strong><div class="task-muted">${escapeHtml(labels.landedAt)} ${escapeHtml(task.doneAt || labels.unavailable)}</div></div><div><div class="task-reason"><strong>${escapeHtml(labels.result)}:</strong> ${escapeHtml(task.result || labels.noResult)}</div></div>${renderActions(task, worktreeAvailable, labels, actionTitle)}</article>`;
+	}
+	return `<article class="task-row"><div><div class="task-title">${escapeHtml(task.title)}</div><span class="task-id">${escapeHtml(task.id)}</span><div class="task-doing">${escapeHtml(task.text || task.state)}</div>${task.stateError || git?.error || !task.worktreePath ? `<div class="task-error">${escapeHtml(task.stateError || git?.error || labels.noWorktree)}</div>` : ''}</div><div><div class="task-project">${escapeHtml(labels.project)} <strong>${escapeHtml(task.project)}</strong></div><div class="task-fields"><span class="task-field">${escapeHtml(labels.agent)} <strong>${escapeHtml(task.id)}</strong></span><span class="task-field">${escapeHtml(labels.elapsed)} <strong>${escapeHtml(formatElapsed(task.updatedAt))}</strong></span></div></div><div class="task-fields"><span class="task-field">${escapeHtml(labels.branch)} <strong>${escapeHtml(git?.branch || labels.unavailable)}</strong></span><span class="task-field">${escapeHtml(labels.base)} <strong>${escapeHtml(git?.baseBranch || labels.unavailable)}</strong></span><span class="task-field">${escapeHtml(labels.commits)} <strong>${git?.commits.length ?? 0}</strong></span><span class="task-field">${escapeHtml(labels.files)} <strong>${git?.changedFiles ?? 0}</strong></span><span class="task-field">${escapeHtml(labels.worktree)} <strong title="${escapeHtml(task.worktreePath || '')}">${escapeHtml(shortPath(task.worktreePath) || labels.unavailable)}</strong></span></div>${renderActions(task, worktreeAvailable, labels, actionTitle)}</article>`;
+}
+
+function renderActions(task: DeckTask, worktreeAvailable: boolean, labels: DeckLabels, title: string | undefined): string {
+	return `<div class="task-actions"><button class="primary" data-action="diff" data-task="${escapeHtml(task.id)}" title="${escapeHtml(title || labels.openDiff)}">${escapeHtml(labels.openDiff)}</button><button class="secondary" data-action="openWorktree" data-task="${escapeHtml(task.id)}" ${worktreeAvailable ? '' : 'disabled'}>${escapeHtml(labels.openWorktree)}</button><button class="secondary" data-action="sourceControl" data-task="${escapeHtml(task.id)}" ${worktreeAvailable ? '' : 'disabled'}>${escapeHtml(labels.openSourceControl)}</button></div>`;
+}
+
+function isTerminal(state: string): boolean {
+	return ['done', 'failed', 'cancelled', 'stopped'].includes(state.toLowerCase());
+}
+
+function isWaiting(task: DeckTask): boolean {
+	return task.backlogSection === 'queued' || Boolean(task.holdReason) || ['paused', 'blocked', 'needs-decision'].includes(task.state.toLowerCase());
+}
+
+function formatElapsed(updatedAt: number | undefined): string {
+	if (!updatedAt) return 'indisponível';
+	const minutes = Math.max(0, Math.floor((Date.now() - updatedAt) / 60000));
+	if (minutes < 1) return 'agora';
+	if (minutes < 60) return `há ${minutes} min`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `há ${hours} h`;
+	return `há ${Math.floor(hours / 24)} d`;
+}
+
+function shortPath(value: string | undefined): string {
+	if (!value) return '';
+	return value.replace(/^\/home\/[^/]+\//, '~/');
 }
 
 function escapeHtml(value: string): string {

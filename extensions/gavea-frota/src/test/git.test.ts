@@ -10,7 +10,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { disambiguatedNames, readGitRepository, repositoryStatus, summarizeFleet } from '../git.ts';
+import { disambiguatedNames, readGitRepository, readGitTask, repositoryStatus, summarizeFleet } from '../git.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -64,5 +64,28 @@ test('reads local commits and their changed files', async () => {
 		assert.deepStrictEqual(state.localCommits?.map(commit => ({ subject: commit.subject, status: commit.files[0]?.status, path: commit.files[0]?.path })), [{ subject: 'local commit', status: 'A', path: 'committed.txt' }]);
 	} finally {
 		await fs.rm(repository, { recursive: true, force: true });
+	}
+});
+
+test('reads a task branch against the project base', async () => {
+	const worktree = await fs.mkdtemp(path.join(os.tmpdir(), 'gavea-task-'));
+	const project = await fs.mkdtemp(path.join(os.tmpdir(), 'gavea-project-'));
+	try {
+		await execFileAsync('git', ['init', '-q', worktree]);
+		await execFileAsync('git', ['-C', worktree, 'config', 'user.email', 'test@example.com']);
+		await execFileAsync('git', ['-C', worktree, 'config', 'user.name', 'Test']);
+		await fs.writeFile(path.join(worktree, 'base.txt'), 'base');
+		await execFileAsync('git', ['-C', worktree, 'add', 'base.txt']);
+		await execFileAsync('git', ['-C', worktree, 'commit', '-q', '-m', 'base']);
+		await execFileAsync('git', ['clone', '-q', worktree, project]);
+		await execFileAsync('git', ['-C', worktree, 'checkout', '-q', '-b', 'fm/task']);
+		await fs.writeFile(path.join(worktree, 'task.txt'), 'task');
+		await execFileAsync('git', ['-C', worktree, 'add', 'task.txt']);
+		await execFileAsync('git', ['-C', worktree, 'commit', '-q', '-m', 'task change']);
+		const state = await readGitTask(worktree, project);
+		assert.deepStrictEqual({ branch: state.branch, baseBranch: state.baseBranch, commits: state.commits.length, changedFiles: state.changedFiles, path: state.changedPaths[0]?.path }, { branch: 'fm/task', baseBranch: 'master', commits: 1, changedFiles: 1, path: 'task.txt' });
+	} finally {
+		await fs.rm(worktree, { recursive: true, force: true });
+		await fs.rm(project, { recursive: true, force: true });
 	}
 });

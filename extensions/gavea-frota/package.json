@@ -12,17 +12,6 @@
 		"configuration": {
 			"title": "%configuration.title%",
 			"properties": {
-				"gavea.frota.repositorios": {
-					"type": "array",
-					"default": [],
-					"items": { "type": "string" },
-					"description": "%config.repositories%"
-				},
-				"gavea.frota.firstmateHome": {
-					"type": "string",
-					"default": "~/dpe/firstmate",
-					"description": "%config.firstmateHome%"
-				},
 				"gavea.frota.intervaloAtualizacao": {
 					"type": "number",
 					"default": 10,
@@ -36,27 +25,21 @@
 		"commands": [
 			{ "command": "gavea.frota.openDeck", "title": "%command.openDeck%", "icon": "$(layout-centered)" },
 			{ "command": "gavea.frota.refresh", "title": "%command.refresh%", "icon": "$(refresh)" },
-			{ "command": "gavea.frota.configure", "title": "%command.configure%" },
-			{ "command": "gavea.frota.pull", "title": "%command.pull%", "icon": "$(cloud-download)" },
-			{ "command": "gavea.frota.push", "title": "%command.push%", "icon": "$(cloud-upload)" },
-			{ "command": "gavea.frota.openChange", "title": "%command.openChange%", "icon": "$(diff)" },
-			{ "command": "gavea.frota.openCommitDiff", "title": "%command.openCommitDiff%", "icon": "$(git-compare)" },
-			{ "command": "gavea.frota.openCommitFile", "title": "%command.openCommitFile%" }
+			{ "command": "gavea.frota.openTaskDiff", "title": "%command.openTaskDiff%", "icon": "$(git-compare)" },
+			{ "command": "gavea.frota.openTaskWorktree", "title": "%command.openTaskWorktree%" },
+			{ "command": "gavea.frota.openTaskSourceControl", "title": "%command.openTaskSourceControl%" }
 		],
 		"menus": {
 			"view/title": [{ "command": "gavea.frota.refresh", "when": "view == gavea.frota", "group": "navigation" }],
 			"view/item/context": [
-				{ "command": "gavea.frota.pull", "when": "view == gavea.frota && viewItem == gavea.frota.repository", "group": "inline@1" },
-				{ "command": "gavea.frota.push", "when": "view == gavea.frota && viewItem == gavea.frota.repository", "group": "inline@2" },
-				{ "command": "gavea.frota.openChange", "when": "view == gavea.frota && viewItem == gavea.frota.changedFile", "group": "inline@1" },
-				{ "command": "gavea.frota.openCommitDiff", "when": "view == gavea.frota && viewItem == gavea.frota.commit", "group": "inline@1" }
+				{ "command": "gavea.frota.openTaskDiff", "when": "view == gavea.frota && viewItem == gavea.frota.task", "group": "inline@1" },
+				{ "command": "gavea.frota.openTaskWorktree", "when": "view == gavea.frota && viewItem == gavea.frota.task", "group": "inline@2" },
+				{ "command": "gavea.frota.openTaskSourceControl", "when": "view == gavea.frota && viewItem == gavea.frota.task", "group": "inline@3" }
 			],
 			"commandPalette": [
 				{ "command": "gavea.frota.openDeck" },
 				{ "command": "gavea.frota.refresh" },
-				{ "command": "gavea.frota.configure" },
-				{ "command": "gavea.frota.pull" },
-				{ "command": "gavea.frota.push" }
+				{ "command": "gavea.frota.openTaskDiff" }
 			]
 		}
 	},
