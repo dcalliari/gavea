@@ -355,7 +355,7 @@ export const troubleshootingOptions = (cliName: string): Fig.Option[] => [
 	},
 	{
 		name: '--telemetry',
-		description: 'Shows all telemetry events which VS code collects',
+		description: 'Shows all telemetry events which the editor collects',
 	},
 	{
 		name: '--transient',
@@ -1184,7 +1184,7 @@ export const codeTunnelSubcommands: Fig.Subcommand[] = [
 
 const codeCompletionSpec: Fig.Spec = {
 	name: 'code',
-	description: 'Visual Studio Code',
+	description: 'Gávea',
 	args: {
 		template: ['filepaths', 'folders'],
 		isVariadic: true,

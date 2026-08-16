@@ -40,10 +40,10 @@ const enum WindowSettingNames {
 
 export const defaultWindowTitle = (() => {
 	if (isMacintosh && isNative) {
-		return '${activeEditorShort}${separator}${rootName}${separator}${profileName}'; // macOS has native dirty indicator
+		return '${activeEditorShort}${separator}${rootName}${separator}${profileName}${separator}${appName}'; // macOS has native dirty indicator
 	}
 
-	const base = '${dirty}${activeEditorShort}${separator}${rootName}${separator}${profileName}${separator}${appName}';
+	const base = '${dirty}${appName}${separator}${activeEditorShort}${separator}${rootName}${separator}${profileName}';
 	if (isWeb) {
 		return base + '${separator}${remoteName}'; // Web: always show remote name
 	}
@@ -296,7 +296,7 @@ export class WindowTitle extends Disposable {
 	 * {rootPath}: e.g. /Users/Development
 	 * {folderName}: e.g. myFolder
 	 * {folderPath}: e.g. /Users/Development/myFolder
-	 * {appName}: e.g. VS Code
+	 * {appName}: e.g. Gávea
 	 * {remoteName}: e.g. SSH
 	 * {dirty}: indicator
 	 * {focusedView}: e.g. Terminal

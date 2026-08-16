@@ -336,12 +336,12 @@ function githubLookupFailureDescription(kind: GitHubLookupFailureKind): {
 		case 'authenticationRequired':
 			return {
 				label: 'Authorization required',
-				detail: 'Authorize GitHub repository access in VS Code to load this link.',
+				detail: 'Authorize GitHub repository access in the editor to load this link.',
 			};
 		case 'authenticationFailed':
 			return {
 				label: 'Authentication failed',
-				detail: 'GitHub rejected the current VS Code authentication session.',
+				detail: 'GitHub rejected the current editor authentication session.',
 			};
 		case 'accessDenied':
 			return {
