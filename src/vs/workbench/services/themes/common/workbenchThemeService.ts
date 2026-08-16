@@ -206,8 +206,6 @@ export const COLOR_THEME_DARK_INITIAL_COLORS = {
 	'titleBar.border': '#2B2B2B',
 	'titleBar.inactiveBackground': '#1F1F1F',
 	'titleBar.inactiveForeground': '#9D9D9D',
-	'welcomePage.progress.foreground': '#0078D4',
-	'welcomePage.tileBackground': '#2B2B2B',
 	'widget.border': '#313131'
 };
 
@@ -357,7 +355,6 @@ export const COLOR_THEME_LIGHT_INITIAL_COLORS = {
 	'titleBar.border': '#E5E5E5',
 	'titleBar.inactiveBackground': '#F8F8F8',
 	'titleBar.inactiveForeground': '#8B949E',
-	'welcomePage.tileBackground': '#F3F3F3',
 	'widget.border': '#E5E5E5'
 };
 

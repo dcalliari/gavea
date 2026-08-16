@@ -370,11 +370,6 @@ export const schema: IJSONSchema = {
 						description: nls.localize('vscode.extension.activationEvents.onTerminalQuickFixRequest', 'An activation event emitted when a command matches the selector associated with this ID'),
 					},
 					{
-						label: 'onWalkthrough',
-						body: 'onWalkthrough:${1:walkthroughID}',
-						description: nls.localize('vscode.extension.activationEvents.onWalkthrough', 'An activation event emitted when a specified walkthrough is opened.'),
-					},
-					{
 						label: 'onIssueReporterOpened',
 						body: 'onIssueReporterOpened',
 						description: nls.localize('vscode.extension.activationEvents.onIssueReporterOpened', 'An activation event emitted when the issue reporter is opened.'),

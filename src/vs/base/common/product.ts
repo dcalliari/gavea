@@ -14,22 +14,6 @@ export interface IBuiltInExtension {
 	readonly metadata: unknown;
 }
 
-export interface IProductWalkthrough {
-	id: string;
-	steps: IProductWalkthroughStep[];
-}
-
-export interface IProductWalkthroughStep {
-	id: string;
-	title: string;
-	when: string;
-	description: string;
-	media:
-	| { type: 'image'; path: string | { hc: string; hcLight?: string; light: string; dark: string }; altText: string }
-	| { type: 'svg'; path: string; altText: string }
-	| { type: 'markdown'; path: string };
-}
-
 export interface IFeaturedExtension {
 	readonly id: string;
 	readonly title: string;
@@ -121,7 +105,6 @@ export interface IProductConfiguration {
 	readonly sharedDataFolderName: string; // location for shared data (e.g. ~/.vscode-insiders-shared)
 
 	readonly builtInExtensions?: IBuiltInExtension[];
-	readonly walkthroughMetadata?: IProductWalkthrough[];
 	readonly featuredExtensions?: IFeaturedExtension[];
 	readonly defaultLayout?: {
 		readonly views?: { readonly id: string }[];
@@ -204,7 +187,6 @@ export interface IProductConfiguration {
 	readonly removeTelemetryMachineId?: boolean;
 	readonly enabledTelemetryLevels?: { error: boolean; usage: boolean };
 	readonly enableTelemetry?: boolean;
-	readonly openToWelcomeMainPage?: boolean;
 	readonly aiConfig?: {
 		readonly ariaKey: string;
 	};
@@ -453,7 +435,6 @@ export interface IDefaultChatAgent {
 	readonly chatQuotaExceededContext: string;
 	readonly completionsQuotaExceededContext: string;
 
-	readonly walkthroughCommand: string;
 	readonly completionsMenuCommand: string;
 	readonly chatRefreshTokenCommand: string;
 	readonly generateCommitMessageCommand: string;

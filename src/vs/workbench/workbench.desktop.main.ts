@@ -68,7 +68,6 @@ import './services/localization/electron-browser/localeService.js';
 import './services/extensions/electron-browser/extensionsScannerService.js';
 import './services/extensionManagement/electron-browser/extensionManagementServerService.js';
 import './services/extensionManagement/electron-browser/extensionGalleryManifestService.js';
-import './services/extensionManagement/electron-browser/extensionTipsService.js';
 import './services/userDataSync/electron-browser/userDataSyncService.js';
 import './services/userDataSync/electron-browser/userDataAutoSyncService.js';
 import './services/timer/electron-browser/timerService.js';
@@ -146,9 +145,6 @@ import './contrib/terminal/electron-browser/terminal.contribution.js';
 // Themes
 import './contrib/themes/browser/themes.test.contribution.js';
 import './services/themes/electron-browser/themes.contribution.js';
-// User Data Sync
-import './contrib/userDataSync/electron-browser/userDataSync.contribution.js';
-
 // Tags
 import './contrib/tags/electron-browser/workspaceTagsService.js';
 import './contrib/tags/electron-browser/tags.contribution.js';

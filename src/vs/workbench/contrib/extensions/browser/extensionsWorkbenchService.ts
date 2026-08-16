@@ -19,7 +19,6 @@ import {
 	InstallOptions, IProductVersion,
 	UninstallExtensionInfo,
 	TargetPlatformToString,
-	IAllowedExtensionsService,
 	AllowedExtensionsConfigKey,
 	EXTENSION_INSTALL_SKIP_PUBLISHER_TRUST_CONTEXT,
 	ExtensionManagementError,
@@ -34,7 +33,7 @@ import { IInstantiationService } from '../../../../platform/instantiation/common
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { IHostService } from '../../../services/host/browser/host.js';
 import { URI } from '../../../../base/common/uri.js';
-import { IExtension, ExtensionState, IExtensionsWorkbenchService, AutoUpdateConfigurationKey, AutoUpdateDelayConfigurationKey, AutoCheckUpdatesConfigurationKey, HasOutdatedExtensionsContext, AutoUpdateConfigurationValue, InstallExtensionOptions, ExtensionRuntimeState, ExtensionRuntimeActionType, AutoRestartConfigurationKey, VIEWLET_ID, IExtensionsViewPaneContainer, IExtensionsNotification } from '../common/extensions.js';
+import { IExtension, ExtensionState, IExtensionsWorkbenchService, AutoUpdateConfigurationKey, AutoUpdateDelayConfigurationKey, AutoCheckUpdatesConfigurationKey, AutoUpdateConfigurationValue, InstallExtensionOptions, ExtensionRuntimeState, ExtensionRuntimeActionType, AutoRestartConfigurationKey, VIEWLET_ID, IExtensionsViewPaneContainer, IExtensionsNotification } from '../common/extensions.js';
 import { ACTIVE_GROUP, IEditorService, MODAL_GROUP, SIDE_GROUP } from '../../../services/editor/common/editorService.js';
 import { IURLService, IURLHandler, IOpenURLOptions } from '../../../../platform/url/common/url.js';
 import { ExtensionsInput, IExtensionEditorOptions } from '../common/extensionsInput.js';
@@ -51,7 +50,6 @@ import { IProductService } from '../../../../platform/product/common/productServ
 import { FileAccess } from '../../../../base/common/network.js';
 import { IIgnoredExtensionsManagementService } from '../../../../platform/userDataSync/common/ignoredExtensions.js';
 import { IUserDataAutoSyncService, IUserDataSyncEnablementService, SyncResource } from '../../../../platform/userDataSync/common/userDataSync.js';
-import { IContextKey, IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
 import { isDefined, isString, isUndefined } from '../../../../base/common/types.js';
 import { IExtensionManifestPropertiesService } from '../../../services/extensions/common/extensionManifestPropertiesService.js';
 import { IExtensionService, IExtensionsStatus as IExtensionRuntimeStatus, toExtension, toExtensionDescription } from '../../../services/extensions/common/extensions.js';
@@ -977,8 +975,6 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 	private static readonly UpdatesCheckInterval = 1000 * 60 * 60 * 12; // 12 hours
 	declare readonly _serviceBrand: undefined;
 
-	private hasOutdatedExtensionsContextKey: IContextKey<boolean>;
-
 	private readonly localExtensions: Extensions | null = null;
 	private readonly remoteExtensions: Extensions | null = null;
 	private readonly webExtensions: Extensions | null = null;
@@ -1021,7 +1017,6 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 		@IIgnoredExtensionsManagementService private readonly extensionsSyncManagementService: IIgnoredExtensionsManagementService,
 		@IUserDataAutoSyncService private readonly userDataAutoSyncService: IUserDataAutoSyncService,
 		@IProductService private readonly productService: IProductService,
-		@IContextKeyService contextKeyService: IContextKeyService,
 		@IExtensionManifestPropertiesService private readonly extensionManifestPropertiesService: IExtensionManifestPropertiesService,
 		@ILogService private readonly logService: ILogService,
 		@IExtensionService private readonly extensionService: IExtensionService,
@@ -1039,12 +1034,10 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 		@IViewsService private readonly viewsService: IViewsService,
 		@IFileDialogService private readonly fileDialogService: IFileDialogService,
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
-		@IAllowedExtensionsService private readonly allowedExtensionsService: IAllowedExtensionsService,
 		@IMeteredConnectionService private readonly meteredConnectionService: IMeteredConnectionService
 	) {
 		super();
 
-		this.hasOutdatedExtensionsContextKey = HasOutdatedExtensionsContext.bindTo(contextKeyService);
 		if (extensionManagementServerService.localExtensionManagementServer) {
 			this.localExtensions = this._register(instantiationService.createInstance(Extensions,
 				extensionManagementServerService.localExtensionManagementServer,
@@ -1105,7 +1098,6 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 			return;
 		}
 
-		this.initializeAutoUpdate();
 		this.extensionGalleryManifestService.getExtensionGalleryManifest()
 			.then(manifest => {
 				if (this._store.isDisposed) {
@@ -1127,90 +1119,6 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 		this._register(this.configurationService.onDidChangeConfiguration(e => {
 			if (e.affectsConfiguration(ExtensionGalleryServiceUrlConfigKey)) {
 				this.updateExtensionsNotificaiton();
-			}
-		}));
-	}
-
-	private initializeAutoUpdate(): void {
-		// Register listeners for auto updates
-		this._register(this.configurationService.onDidChangeConfiguration(e => {
-			if (e.affectsConfiguration(AutoUpdateConfigurationKey)) {
-				if (!this.isAutoUpdateEnabled()) {
-					// Auto update disabled — cancel any pending delayed re-check
-					this.delayedAutoUpdateCheckTimer.value = undefined;
-				} else {
-					this.eventuallyAutoUpdateExtensions();
-				}
-				// The auto update value affects whether an extension is shown as delayed
-				this._onChange.fire(undefined);
-			}
-			if (e.affectsConfiguration(AutoUpdateDelayConfigurationKey)) {
-				// The delay affects when delayed updates are applied — cancel any pending
-				// delayed re-check and re-run the scheduling path with the new delay.
-				this.delayedAutoUpdateCheckTimer.value = undefined;
-				if (this.isAutoUpdateEnabled()) {
-					this.eventuallyAutoUpdateExtensions();
-				}
-				// The delay affects whether an extension is shown as delayed
-				this._onChange.fire(undefined);
-			}
-			if (e.affectsConfiguration(AutoCheckUpdatesConfigurationKey)) {
-				if (this.isAutoCheckUpdatesEnabled()) {
-					this.checkForUpdates(`Enabled auto check updates`);
-				}
-			}
-		}));
-		this._register(this.extensionEnablementService.onEnablementChanged(platformExtensions => {
-			if (this.isAutoCheckUpdatesEnabled() && this.getAutoUpdateValue() === 'on' && platformExtensions.some(e => this.extensionEnablementService.isEnabled(e))) {
-				this.checkForUpdates('Extension enablement changed');
-			}
-		}));
-		this._register(Event.debounce(this.onChange, () => undefined, 100)(() => this.hasOutdatedExtensionsContextKey.set(this.outdated.length > 0)));
-		this._register(this.updateService.onStateChange(e => {
-			if ((e.type === StateType.CheckingForUpdates && e.explicit) || e.type === StateType.AvailableForDownload || e.type === StateType.Downloaded) {
-				this.telemetryService.publicLog2<{}, {
-					owner: 'sandy081';
-					comment: 'Report when update check is triggered on product update';
-				}>('extensions:updatecheckonproductupdate');
-				if (this.isAutoCheckUpdatesEnabled()) {
-					this.checkForUpdates('Product update');
-				}
-			}
-		}));
-
-		this._register(this.allowedExtensionsService.onDidChangeAllowedExtensionsConfigValue(() => {
-			if (this.isAutoCheckUpdatesEnabled()) {
-				this.checkForUpdates('Allowed extensions changed');
-			}
-		}));
-
-		this._register(this.meteredConnectionService.onDidChangeIsConnectionMetered(() => {
-			if (this.isAutoCheckUpdatesEnabled()) {
-				this.checkForUpdates('Connection is no longer metered');
-			}
-			if (isWeb && !this.isAutoUpdateEnabled()) {
-				this.autoUpdateBuiltinExtensions();
-			}
-		}));
-
-		// Update AutoUpdate Contexts
-		this.hasOutdatedExtensionsContextKey.set(this.outdated.length > 0);
-
-		// Check for updates
-		this.eventuallyCheckForUpdates(true);
-
-		if (isWeb) {
-			this.syncPinnedBuiltinExtensions();
-			// Always auto update builtin extensions in web
-			if (!this.isAutoUpdateEnabled()) {
-				this.autoUpdateBuiltinExtensions();
-			}
-		}
-
-		this.registerAutoRestartListener();
-		this._register(this.configurationService.onDidChangeConfiguration(e => {
-			if (e.affectsConfiguration(AutoRestartConfigurationKey)) {
-				this.registerAutoRestartListener();
 			}
 		}));
 	}
@@ -1304,18 +1212,6 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 		this.setDisabledAutoUpdateExtensions([]);
 		await this.updateExtensionsPinnedState(!isAutoUpdateEnabled);
 		this._onChange.fire(undefined);
-	}
-
-	private readonly autoRestartListenerDisposable = this._register(new MutableDisposable());
-	private registerAutoRestartListener(): void {
-		this.autoRestartListenerDisposable.value = undefined;
-		if (this.configurationService.getValue(AutoRestartConfigurationKey) === true) {
-			this.autoRestartListenerDisposable.value = this.hostService.onDidChangeFocus(focus => {
-				if (!focus && this.configurationService.getValue(AutoRestartConfigurationKey) === true) {
-					this.updateRunningExtensions(undefined, true);
-				}
-			});
-		}
 	}
 
 	private reportInstalledExtensionsTelemetry() {
@@ -2245,30 +2141,6 @@ export class ExtensionsWorkbenchService extends Disposable implements IExtension
 	private eventuallyAutoUpdateExtensions(): void {
 		this.autoUpdateDelayer.trigger(() => this.autoUpdateExtensions())
 			.then(undefined, err => null);
-	}
-
-	private async autoUpdateBuiltinExtensions(): Promise<void> {
-		if (this.meteredConnectionService.isConnectionMetered) {
-			return;
-		}
-		await this.checkForUpdates(undefined, true);
-		const toUpdate = this.outdated.filter(e => e.isBuiltin);
-		await Promises.settled(toUpdate.map(e => this.install(e, e.local?.preRelease ? { installPreReleaseVersion: true } : undefined)));
-	}
-
-	private async syncPinnedBuiltinExtensions(): Promise<void> {
-		const infos: IExtensionInfo[] = [];
-		for (const installed of this.local) {
-			if (installed.isBuiltin && installed.local?.pinned && installed.local?.identifier.uuid) {
-				infos.push({ ...installed.identifier, version: installed.version });
-			}
-		}
-		if (infos.length) {
-			const galleryExtensions = await this.galleryService.getExtensions(infos, CancellationToken.None);
-			if (galleryExtensions.length) {
-				await this.syncInstalledExtensionsWithGallery(galleryExtensions);
-			}
-		}
 	}
 
 	private async autoUpdateExtensions(): Promise<void> {

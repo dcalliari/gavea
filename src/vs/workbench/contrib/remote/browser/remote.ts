@@ -51,8 +51,6 @@ import { ILogService } from '../../../../platform/log/common/log.js';
 import { ITimerService } from '../../../services/timer/browser/timerService.js';
 import { getRemoteName } from '../../../../platform/remote/common/remoteHosts.js';
 import { getVirtualWorkspaceLocation } from '../../../../platform/workspace/common/virtualWorkspace.js';
-import { IWalkthroughsService } from '../../welcomeGettingStarted/browser/gettingStartedService.js';
-import { Schemas } from '../../../../base/common/network.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 
@@ -130,8 +128,7 @@ class HelpModel extends Disposable {
 		private commandService: ICommandService,
 		private remoteExplorerService: IRemoteExplorerService,
 		private environmentService: IWorkbenchEnvironmentService,
-		private workspaceContextService: IWorkspaceContextService,
-		private walkthroughsService: IWalkthroughsService
+		private workspaceContextService: IWorkspaceContextService
 	) {
 		super();
 
@@ -141,7 +138,6 @@ class HelpModel extends Disposable {
 
 	private createHelpItemValue(info: HelpInformation, infoKey: Exclude<keyof HelpInformation, 'extensionDescription' | 'remoteName' | 'virtualWorkspace'>) {
 		return new HelpItemValue(this.commandService,
-			this.walkthroughsService,
 			info.extensionDescription,
 			(typeof info.remoteName === 'string') ? [info.remoteName] : info.remoteName,
 			info.virtualWorkspace,
@@ -150,24 +146,6 @@ class HelpModel extends Disposable {
 
 	private updateItems() {
 		const helpItems: IHelpItem[] = [];
-
-		const getStarted = this.viewModel.helpInformation.filter(info => info.getStarted);
-		if (getStarted.length) {
-			const helpItemValues = getStarted.map((info: HelpInformation) => this.createHelpItemValue(info, 'getStarted'));
-			const getStartedHelpItem = this.items?.find(item => item.icon === icons.getStartedIcon) ?? new GetStartedHelpItem(
-				icons.getStartedIcon,
-				nls.localize('remote.help.getStarted', "Get Started"),
-				helpItemValues,
-				this.quickInputService,
-				this.environmentService,
-				this.openerService,
-				this.remoteExplorerService,
-				this.workspaceContextService,
-				this.commandService
-			);
-			getStartedHelpItem.values = helpItemValues;
-			helpItems.push(getStartedHelpItem);
-		}
 
 		const documentation = this.viewModel.helpInformation.filter(info => info.documentation);
 		if (documentation.length) {
@@ -230,7 +208,7 @@ class HelpItemValue {
 	private _url: string | undefined;
 	private _description: string | undefined;
 
-	constructor(private commandService: ICommandService, private walkthroughService: IWalkthroughsService, public extensionDescription: IExtensionDescription, public readonly remoteAuthority: string[] | undefined, public readonly virtualWorkspace: string | undefined, private urlOrCommandOrId?: string | { id: string }) {
+	constructor(private commandService: ICommandService, public extensionDescription: IExtensionDescription, public readonly remoteAuthority: string[] | undefined, public readonly virtualWorkspace: string | undefined, private urlOrCommandOrId?: string) {
 	}
 
 	get description(): Promise<string | undefined> {
@@ -257,13 +235,6 @@ class HelpItemValue {
 					const emptyString: Promise<string> = new Promise(resolve => setTimeout(() => resolve(''), 500));
 					this._url = await Promise.race([urlCommand, emptyString]);
 				}
-			} else if (this.urlOrCommandOrId?.id) {
-				try {
-					const walkthroughId = `${this.extensionDescription.id}#${this.urlOrCommandOrId.id}`;
-					const walkthrough = await this.walkthroughService.getWalkthrough(walkthroughId);
-					this._description = walkthrough.title;
-					this._url = walkthroughId;
-				} catch { }
 			}
 		}
 		if (this._url === undefined) {
@@ -358,31 +329,6 @@ abstract class HelpItemBase implements IHelpItem {
 	protected abstract takeAction(extensionDescription: IExtensionDescription, url?: string): Promise<void>;
 }
 
-class GetStartedHelpItem extends HelpItemBase {
-	constructor(
-		icon: ThemeIcon,
-		label: string,
-		values: HelpItemValue[],
-		quickInputService: IQuickInputService,
-		environmentService: IWorkbenchEnvironmentService,
-		private openerService: IOpenerService,
-		remoteExplorerService: IRemoteExplorerService,
-		workspaceContextService: IWorkspaceContextService,
-		private commandService: ICommandService
-	) {
-		super(icon, label, values, quickInputService, environmentService, remoteExplorerService, workspaceContextService);
-	}
-
-	protected async takeAction(extensionDescription: IExtensionDescription, urlOrWalkthroughId: string): Promise<void> {
-		if ([Schemas.http, Schemas.https].includes(URI.parse(urlOrWalkthroughId).scheme)) {
-			this.openerService.open(urlOrWalkthroughId, { allowCommands: true });
-			return;
-		}
-
-		this.commandService.executeCommand('workbench.action.openWalkthrough', urlOrWalkthroughId);
-	}
-}
-
 class HelpItem extends HelpItemBase {
 	constructor(
 		icon: ThemeIcon,
@@ -464,7 +410,6 @@ class HelpPanel extends ViewPane {
 		@IThemeService themeService: IThemeService,
 		@IHoverService hoverService: IHoverService,
 		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
-		@IWalkthroughsService private readonly walkthroughsService: IWalkthroughsService,
 	) {
 		super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, hoverService);
 	}
@@ -493,7 +438,7 @@ class HelpPanel extends ViewPane {
 			}
 		);
 
-		const model = this._register(new HelpModel(this.viewModel, this.openerService, this.quickInputService, this.commandService, this.remoteExplorerService, this.environmentService, this.workspaceContextService, this.walkthroughsService));
+		const model = this._register(new HelpModel(this.viewModel, this.openerService, this.quickInputService, this.commandService, this.remoteExplorerService, this.environmentService, this.workspaceContextService));
 
 		this.tree.setInput(model);
 
@@ -600,13 +545,12 @@ class RemoteViewPaneContainer extends FilterViewPaneContainer implements IViewMo
 			return;
 		}
 
-		if (!extension.value.documentation && !extension.value.getStarted && !extension.value.issues) {
+		if (!extension.value.documentation && !extension.value.issues) {
 			return;
 		}
 
 		helpInformation.push({
 			extensionDescription: extension.description,
-			getStarted: extension.value.getStarted,
 			documentation: extension.value.documentation,
 			reportIssue: extension.value.reportIssue,
 			issues: extension.value.issues,

@@ -16,7 +16,6 @@ import { URI } from '../../../../base/common/uri.js';
 import { Attributes, CandidatePort, TunnelCloseReason, TunnelModel, TunnelProperties, TunnelSource } from './tunnelModel.js';
 import { ExtensionsRegistry, IExtensionPointUser } from '../../extensions/common/extensionsRegistry.js';
 import { IExtensionDescription } from '../../../../platform/extensions/common/extensions.js';
-import { IJSONSchema } from '../../../../base/common/jsonSchema.js';
 
 export const IRemoteExplorerService = createDecorator<IRemoteExplorerService>('remoteExplorerService');
 export const REMOTE_EXPLORER_TYPE_KEY: string = 'remote.explorerType';
@@ -64,7 +63,6 @@ export enum TunnelEditId {
 
 export interface HelpInformation {
 	extensionDescription: IExtensionDescription;
-	getStarted?: string | { id: string };
 	documentation?: string;
 	issues?: string;
 	reportIssue?: string;
@@ -72,30 +70,12 @@ export interface HelpInformation {
 	virtualWorkspace?: string;
 }
 
-const getStartedWalkthrough: IJSONSchema = {
-	type: 'object',
-	required: ['id'],
-	properties: {
-		id: {
-			description: nls.localize('getStartedWalkthrough.id', 'The ID of a Get Started walkthrough to open.'),
-			type: 'string'
-		},
-	}
-};
-
 const remoteHelpExtPoint = ExtensionsRegistry.registerExtensionPoint<HelpInformation>({
 	extensionPoint: 'remoteHelp',
 	jsonSchema: {
 		description: nls.localize('RemoteHelpInformationExtPoint', 'Contributes help information for Remote'),
 		type: 'object',
 		properties: {
-			'getStarted': {
-				description: nls.localize('RemoteHelpInformationExtPoint.getStarted', "The url, or a command that returns the url, to your project's Getting Started page, or a walkthrough ID contributed by your project's extension"),
-				oneOf: [
-					{ type: 'string' },
-					getStartedWalkthrough
-				]
-			},
 			'documentation': {
 				description: nls.localize('RemoteHelpInformationExtPoint.documentation', "The url, or a command that returns the url, to your project's documentation page"),
 				type: 'string'

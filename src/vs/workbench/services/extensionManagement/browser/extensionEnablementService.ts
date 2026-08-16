@@ -681,7 +681,7 @@ export class ExtensionEnablementService extends Disposable implements IWorkbench
 			}
 
 			const contributes = extension.manifest.contributes;
-			if (contributes?.debuggers || contributes?.views || contributes?.viewsContainers || contributes?.walkthroughs) {
+			if (contributes?.debuggers || contributes?.views || contributes?.viewsContainers) {
 				return true;
 			}
 

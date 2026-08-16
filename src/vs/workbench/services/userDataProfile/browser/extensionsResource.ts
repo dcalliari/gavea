@@ -8,7 +8,7 @@ import { Codicon } from '../../../../base/common/codicons.js';
 import { DisposableStore } from '../../../../base/common/lifecycle.js';
 import { localize } from '../../../../nls.js';
 import { GlobalExtensionEnablementService } from '../../../../platform/extensionManagement/common/extensionEnablementService.js';
-import { EXTENSION_INSTALL_SKIP_PUBLISHER_TRUST_CONTEXT, EXTENSION_INSTALL_SKIP_WALKTHROUGH_CONTEXT, IExtensionGalleryService, IExtensionIdentifier, IExtensionManagementService, IGlobalExtensionEnablementService, ILocalExtension, InstallExtensionInfo } from '../../../../platform/extensionManagement/common/extensionManagement.js';
+import { EXTENSION_INSTALL_SKIP_PUBLISHER_TRUST_CONTEXT, IExtensionGalleryService, IExtensionIdentifier, IExtensionManagementService, IGlobalExtensionEnablementService, ILocalExtension, InstallExtensionInfo } from '../../../../platform/extensionManagement/common/extensionManagement.js';
 import { areSameExtensions } from '../../../../platform/extensionManagement/common/extensionManagementUtil.js';
 import { ExtensionType } from '../../../../platform/extensions/common/extensions.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
@@ -83,7 +83,7 @@ export class ExtensionsResourceInitializer implements IProfileResourceInitialize
 						installGivenVersion: !!e.version,
 						installPreReleaseVersion: e.preRelease,
 						profileLocation: this.userDataProfileService.currentProfile.extensionsResource,
-						context: { [EXTENSION_INSTALL_SKIP_WALKTHROUGH_CONTEXT]: true, [EXTENSION_INSTALL_SKIP_PUBLISHER_TRUST_CONTEXT]: true }
+						context: { [EXTENSION_INSTALL_SKIP_PUBLISHER_TRUST_CONTEXT]: true }
 					});
 					this.logService.info(`Initializing Profile: Installed extension...`, extension.identifier.id, extension.version);
 				} else {
@@ -163,7 +163,7 @@ export class ExtensionsResource implements IProfileResource {
 								installGivenVersion: !!e.version,
 								installPreReleaseVersion: e.preRelease,
 								profileLocation: profile.extensionsResource,
-								context: { [EXTENSION_INSTALL_SKIP_WALKTHROUGH_CONTEXT]: true }
+								context: {}
 							}
 						});
 					} else {

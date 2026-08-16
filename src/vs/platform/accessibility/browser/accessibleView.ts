@@ -38,7 +38,6 @@ export const enum AccessibleViewProviderId {
 	Repl = 'repl',
 	ReplHelp = 'replHelp',
 	RunAndDebug = 'runAndDebug',
-	Walkthrough = 'walkthrough',
 	SourceControl = 'scm',
 	EditorFindHelp = 'editorFindHelp',
 	SearchHelp = 'searchHelp',

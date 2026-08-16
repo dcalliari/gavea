@@ -3120,7 +3120,7 @@ class LayoutStateModel extends Disposable {
 		// Auxiliary bar: Maximized settings
 		if (this.isNew[StorageScope.WORKSPACE]) {
 			const defaultAuxiliaryBarVisibility = this.configurationService.getValue(WorkbenchLayoutSettings.AUXILIARYBAR_DEFAULT_VISIBILITY);
-			const startupEditor = this.configurationService.getValue<'none' | 'welcomePage' | 'readme' | 'newUntitledFile' | 'welcomePageInEmptyWorkbench' | 'terminal' | 'agentSessionsWelcomePage'>('workbench.startupEditor');
+			const startupEditor = this.configurationService.getValue<'none' | 'readme' | 'newUntitledFile' | 'terminal' | 'agentSessionsWelcomePage'>('workbench.startupEditor');
 			if (startupEditor === 'agentSessionsWelcomePage') {
 				this.applyAuxiliaryBarHiddenOverride(true);
 			} else if (

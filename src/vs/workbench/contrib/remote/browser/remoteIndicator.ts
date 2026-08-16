@@ -29,7 +29,7 @@ import { getVirtualWorkspaceLocation } from '../../../../platform/workspace/comm
 import { getCodiconAriaLabel } from '../../../../base/common/iconLabels.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { ReloadWindowAction } from '../../../browser/actions/windowActions.js';
-import { EXTENSION_INSTALL_SKIP_WALKTHROUGH_CONTEXT, IExtensionGalleryService, IExtensionManagementService } from '../../../../platform/extensionManagement/common/extensionManagement.js';
+import { IExtensionGalleryService, IExtensionManagementService } from '../../../../platform/extensionManagement/common/extensionManagement.js';
 import { IExtensionsWorkbenchService, LIST_WORKSPACE_UNSUPPORTED_EXTENSIONS_COMMAND_ID } from '../../extensions/common/extensions.js';
 import { ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
 import { IMarkdownString, MarkdownString } from '../../../../base/common/htmlContent.js';
@@ -640,7 +640,7 @@ export class RemoteStatusIndicator extends Disposable implements IWorkbenchContr
 			await this.extensionsWorkbenchService.install(extensionId, {
 				isMachineScoped: false,
 				donotIncludePackAndDependencies: false,
-				context: { [EXTENSION_INSTALL_SKIP_WALKTHROUGH_CONTEXT]: true }
+				context: {}
 			});
 		} catch (error) {
 			if (!this.lifecycleService.willShutdown) {

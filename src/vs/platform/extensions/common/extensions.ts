@@ -111,31 +111,6 @@ export interface IAuthenticationContribution {
 	readonly authorizationServerGlobs?: string[];
 }
 
-export interface IWalkthroughStep {
-	readonly id: string;
-	readonly title: string;
-	readonly description: string | undefined;
-	readonly media:
-	| { image: string | { dark: string; light: string; hc: string }; altText: string; markdown?: never; svg?: never; video?: never }
-	| { markdown: string; image?: never; svg?: never; video?: never }
-	| { svg: string; altText: string; markdown?: never; image?: never; video?: never }
-	| { video: string | { dark: string; light: string; hc: string }; poster: string | { dark: string; light: string; hc: string }; altText: string; markdown?: never; image?: never; svg?: never };
-	readonly completionEvents?: string[];
-	/** @deprecated use `completionEvents: 'onCommand:...'` */
-	readonly doneOn?: { command: string };
-	readonly when?: string;
-}
-
-export interface IWalkthrough {
-	readonly id: string;
-	readonly title: string;
-	readonly icon?: string;
-	readonly description: string;
-	readonly steps: IWalkthroughStep[];
-	readonly featuredFor: string[] | undefined;
-	readonly when?: string;
-}
-
 export interface IStartEntry {
 	readonly title: string;
 	readonly description: string;
@@ -233,7 +208,6 @@ export interface IExtensionContributions {
 	readonly customEditors?: readonly IWebviewEditor[];
 	readonly codeActions?: readonly ICodeActionContribution[];
 	authentication?: IAuthenticationContribution[];
-	walkthroughs?: IWalkthrough[];
 	startEntries?: IStartEntry[];
 	readonly notebooks?: INotebookEntry[];
 	readonly notebookRenderer?: INotebookRendererContribution[];
