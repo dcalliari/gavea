@@ -1,0 +1,12 @@
+<!-- Ícone de aplicativo do Gávea. Fundo azul-mar profundo, marca em ciano claro.
+     Quadrado 512 com cantos arredondados; a marca ocupa a área segura central. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#12303A"/>
+  <g transform="translate(256 256) scale(15.5) translate(-12 -12)"
+     fill="none" stroke="#7FD4E3" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2.4v18.9"/>
+    <path d="M3.9 8.9h16.2"/>
+    <path d="M5.7 8.9 7.6 15.2h8.8l1.9-6.3"/>
+    <path d="M8.9 9.4v5.2M15.1 9.4v5.2"/>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+<!-- Marca do Gávea, variante para tamanhos pequenos (16px e abaixo).
+     Cesto sólido: os balaústres da marca principal fecham e viram borrão nessa escala.
+     Monocromático, herda a cor do contexto via currentColor. Grade 24. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <g fill="currentColor">
+    <path d="M11.15 2.2h1.7v5.05h-1.7z"/>
+    <path d="M3.6 8.6h16.8l-2.35 6.5a1 1 0 0 1-.94.66H6.89a1 1 0 0 1-.94-.66Z"/>
+    <path d="M11.15 15.9h1.7v5.9h-1.7z"/>
+  </g>
+</svg>

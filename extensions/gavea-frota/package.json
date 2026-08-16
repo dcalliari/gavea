@@ -31,7 +31,7 @@
 				}
 			}
 		},
-		"viewsContainers": { "activitybar": [{ "id": "gavea-frota", "title": "%container.title%", "icon": "$(repo)" }] },
+		"viewsContainers": { "activitybar": [{ "id": "gavea-frota", "title": "%container.title%", "icon": "./gavea-mark.svg" }] },
 		"views": { "gavea-frota": [{ "id": "gavea.frota", "name": "%view.title%" }] },
 		"commands": [
 			{ "command": "gavea.frota.openDeck", "title": "%command.openDeck%", "icon": "$(layout-centered)" },
