@@ -13930,6 +13930,16 @@ declare module 'vscode' {
 		export const textDocuments: readonly TextDocument[];
 
 		/**
+		 * Compatibility surface for extensions that still query notebook state.
+		 * The Gávea fork does not provide notebook documents or notebook events.
+		 */
+		export const notebookDocuments: readonly never[];
+		export const onDidOpenNotebookDocument: Event<never>;
+		export const onDidChangeNotebookDocument: Event<never>;
+		export const onDidSaveNotebookDocument: Event<never>;
+		export const onDidCloseNotebookDocument: Event<never>;
+
+		/**
 		 * Opens a document. Will return early if this document is already open. Otherwise
 		 * the document is loaded and the {@link workspace.onDidOpenTextDocument didOpen}-event fires.
 		 *

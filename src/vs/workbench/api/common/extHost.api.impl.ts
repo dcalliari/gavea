@@ -1060,6 +1060,8 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 
 		// namespace: workspace
 
+		const emptyNotebookDocuments: readonly never[] = Object.freeze([]);
+
 		const workspace: typeof vscode.workspace = {
 			get rootPath() {
 				extHostApiDeprecation.report('workspace.rootPath', extension,
@@ -1076,6 +1078,11 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 			get workspaceFolders() {
 				return extHostWorkspace.getWorkspaceFolders();
 			},
+			notebookDocuments: emptyNotebookDocuments,
+			onDidOpenNotebookDocument: Event.None as vscode.Event<never>,
+			onDidChangeNotebookDocument: Event.None as vscode.Event<never>,
+			onDidSaveNotebookDocument: Event.None as vscode.Event<never>,
+			onDidCloseNotebookDocument: Event.None as vscode.Event<never>,
 			get name() {
 				return extHostWorkspace.name;
 			},
