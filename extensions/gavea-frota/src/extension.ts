@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *---------------------------------------------------------------------------------------------*/
 
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { FirstmateTask, readFleetTasks } from './firstmate';
@@ -13,74 +14,34 @@ const firstmateHome = path.join(process.env['HOME'] || '/home/calliari', 'dpe', 
 
 type FleetTask = DeckTask;
 
-class TaskItem extends vscode.TreeItem {
-	constructor(readonly task: FleetTask) {
-		super(task.title, vscode.TreeItemCollapsibleState.None);
-		this.contextValue = 'gavea.frota.task';
-		this.description = task.stateError || `${task.project} · ${task.state}`;
-		this.tooltip = new vscode.MarkdownString(`**${task.title}**\n\nTarefa \`${task.id}\`\n\nProjeto: **${task.project}**`);
-		if (task.holdReason) {
-			this.tooltip.appendMarkdown(`\n\nAguardando: ${task.holdReason}`);
-		}
-		if (task.stateError) {
-			this.tooltip.appendMarkdown(`\n\nErro: ${task.stateError}`);
-		}
-		this.command = { command: 'gavea.frota.openTaskDiff', title: 'Abrir Diff da Tarefa', arguments: [this] };
-		const icon = task.stateError ? 'error' : task.backlogSection === 'queued' ? 'warning' : task.backlogSection === 'done' ? 'pass' : 'sync';
-		const color = task.stateError ? 'testing.iconFailed' : task.backlogSection === 'queued' ? 'charts.yellow' : task.backlogSection === 'done' ? 'testing.iconPassed' : 'charts.blue';
-		this.iconPath = new vscode.ThemeIcon(icon, new vscode.ThemeColor(color));
+/* The log lives beside the firstmate session data so supervisor and captain can collect one file. */
+const errorLogPath = path.join(firstmateHome, 'data', 'gavea-errors.log');
+
+async function logError(side: 'extension' | 'webview', event: string, error: unknown, context?: Record<string, string | number | undefined>): Promise<void> {
+	const message = sanitize(error instanceof Error ? error.message : String(error));
+	const stack = error instanceof Error && error.stack ? sanitize(error.stack) : undefined;
+	const details = Object.entries(context || {}).filter(([, value]) => value !== undefined).map(([key, value]) => `${key}=${sanitize(String(value))}`).join(' ');
+	const line = JSON.stringify({ at: new Date().toISOString(), side, event, message, ...(stack ? { stack } : {}), ...(details ? { context: details } : {}) }) + '\n';
+	try {
+		await fs.mkdir(path.dirname(errorLogPath), { recursive: true });
+		await fs.appendFile(errorLogPath, line, { mode: 0o600 });
+	} catch {
+		// Logging must never prevent the observer from opening.
 	}
 }
 
-class TaskGroupItem extends vscode.TreeItem {
-	constructor(label: string, readonly children: readonly TaskItem[], description: string) {
-		super(label, children.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None);
-		this.contextValue = 'gavea.frota.taskGroup';
-		this.description = description;
-	}
+function sanitize(value: string): string {
+	return value.replace(/(bearer|token|password|passwd|secret|api[_-]?key)\s*[=:]\s*[^\s,;]+/gi, '$1=[redacted]').replace(/https?:\/\/[^\s]+/gi, '[url redacted]');
 }
 
-class FleetProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-	private readonly changeEmitter = new vscode.EventEmitter<void>();
-	readonly onDidChangeTreeData = this.changeEmitter.event;
-	private items: TaskGroupItem[] = [];
-
-	getTreeItem(item: vscode.TreeItem): vscode.TreeItem {
-		return item;
-	}
-
-	getChildren(item?: vscode.TreeItem): vscode.TreeItem[] {
-		return item instanceof TaskGroupItem ? [...item.children] : item ? [] : this.items;
-	}
-
-	setItems(tasks: readonly FleetTask[]): void {
-		const waiting = tasks.filter(task => isWaiting(task));
-		const progress = tasks.filter(task => !isTerminal(task.state) && !waiting.includes(task) && (task.backlogSection === 'in-flight' || Boolean(task.worktreePath)));
-		const landed = tasks.filter(task => task.backlogSection === 'done' || task.backlogChecked && task.doneAt).slice(0, 10);
-		this.items = [
-			new TaskGroupItem('Esperando você', waiting.map(task => new TaskItem(task)), `${waiting.length}`),
-			new TaskGroupItem('Em andamento', progress.map(task => new TaskItem(task)), `${progress.length}`),
-			new TaskGroupItem('Aterrissadas recentemente', landed.map(task => new TaskItem(task)), `${landed.length}`)
-		];
-		this.changeEmitter.fire();
-	}
-
-	dispose(): void {
-		this.changeEmitter.dispose();
-	}
-}
-
+/* The deck is the single fleet surface; the former sidebar tree is intentionally removed. */
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-	const provider = new FleetProvider();
-	context.subscriptions.push(provider);
-	const tree = vscode.window.createTreeView('gavea.frota', { treeDataProvider: provider, showCollapseAll: false });
-	context.subscriptions.push(tree);
+	let deckPanel: vscode.WebviewPanel | undefined;
 	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10);
 	statusBar.command = 'gavea.frota.openDeck';
 	statusBar.tooltip = 'Frota: tarefas aguardando, em andamento e aterrissadas';
 	statusBar.show();
 	context.subscriptions.push(statusBar);
-	let deckPanel: vscode.WebviewPanel | undefined;
 	let latestTasks: FleetTask[] = [];
 	let refreshing = false;
 
@@ -91,22 +52,29 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		refreshing = true;
 		try {
 			const snapshot = await readFleetTasks(firstmateHome);
+			if (snapshot.error) {
+				await logError('extension', 'fleet-read', snapshot.error);
+			}
 			const tasks = await Promise.all(snapshot.tasks.map(async task => {
 				if (!task.worktreePath) {
 					return task;
 				}
 				const git = await readGitTask(task.worktreePath, task.projectPath);
+				if (git.error) {
+					await logError('extension', 'git-read', git.error, { task: task.id });
+				}
 				return { ...task, git };
 			}));
 			latestTasks = tasks;
-			provider.setItems(tasks);
-			const waiting = tasks.filter(task => isWaiting(task)).length;
-			const progress = tasks.filter(task => !isTerminal(task.state) && !isWaiting(task) && (task.backlogSection === 'in-flight' || Boolean(task.worktreePath))).length;
-			const landed = tasks.filter(task => task.backlogSection === 'done').length;
+			const waiting = tasks.filter(task => taskGroup(task) === 'waiting').length;
+			const progress = tasks.filter(task => taskGroup(task) === 'progress').length;
+			const landed = tasks.filter(task => taskGroup(task) === 'landed').length;
 			statusBar.text = `$(warning) ${waiting} · $(pulse) ${progress} · $(check) ${landed}`;
 			if (deckPanel) {
 				deckPanel.webview.html = renderFleetDeck(tasks, snapshot.error, deckLabels());
 			}
+		} catch (error) {
+			await logError('extension', 'refresh', error);
 		} finally {
 			refreshing = false;
 		}
@@ -133,27 +101,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		updateTimer();
 	}));
 	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.focus', () => vscode.commands.executeCommand('gavea.frota.openDeck')));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openTaskDiff', async (item: TaskItem) => {
-		if (item instanceof TaskItem) {
-			await openTaskDiff(item.task);
-		}
-	}));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openTaskWorktree', async (item: TaskItem) => {
-		if (item instanceof TaskItem) {
-			await openTaskWorktree(item.task);
-		}
-	}));
-	context.subscriptions.push(vscode.commands.registerCommand('gavea.frota.openTaskSourceControl', async (item: TaskItem) => {
-		if (item instanceof TaskItem) {
-			await openTaskSourceControl(item.task);
-		}
-	}));
-	context.subscriptions.push(tree.onDidChangeVisibility(() => {
-		updateTimer();
-		if (tree.visible) {
-			void refresh();
-		}
-	}));
 	context.subscriptions.push(vscode.window.onDidChangeWindowState(state => {
 		updateTimer();
 		if (state.focused) {
@@ -168,7 +115,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	}));
 	let timer: ReturnType<typeof setInterval> | undefined;
 	const updateTimer = (): void => {
-		if ((tree.visible || deckPanel?.visible) && vscode.window.state.focused) {
+		if (deckPanel?.visible && vscode.window.state.focused) {
 			clearInterval(timer);
 			const seconds = Math.max(1, vscode.workspace.getConfiguration('gavea.frota').get<number>('intervaloAtualizacao', 10));
 			timer = setInterval(() => void refresh(), seconds * 1000);
@@ -180,11 +127,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	context.subscriptions.push({ dispose: () => clearInterval(timer) });
 	await refresh();
 	updateTimer();
+	await vscode.commands.executeCommand('gavea.frota.openDeck');
 }
 
 interface DeckMessage {
 	readonly type: string;
 	readonly taskId?: string;
+	readonly message?: string;
+	readonly error?: string;
+	readonly source?: string;
+	readonly line?: number;
+	readonly column?: number;
+	readonly stack?: string;
 }
 
 interface GitRepositoryApi {
@@ -201,6 +155,10 @@ interface GitExtension {
 }
 
 async function handleDeckMessage(message: DeckMessage, tasks: () => readonly FleetTask[], refresh: () => Promise<void>): Promise<void> {
+	if (message.type === 'webviewError') {
+		await logError('webview', 'runtime', message.error || message.message || 'Erro sem mensagem', { source: message.source, line: message.line, column: message.column, stack: message.stack });
+		return;
+	}
 	if (message.type === 'refresh') {
 		await refresh();
 		return;
@@ -279,6 +237,7 @@ async function openTaskDiff(task: FleetTask): Promise<void> {
 
 async function showTaskError(task: FleetTask, error: unknown): Promise<void> {
 	const message = error instanceof Error ? error.message : String(error);
+	await logError('extension', 'task-action', error, { task: task.id });
 	await vscode.window.showErrorMessage(`Não foi possível abrir ${task.id}: ${message}`);
 }
 
@@ -286,8 +245,14 @@ function isTerminal(state: string): boolean {
 	return ['done', 'failed', 'cancelled', 'stopped'].includes(state.toLowerCase());
 }
 
-function isWaiting(task: FirstmateTask): boolean {
-	return task.backlogSection === 'queued' || Boolean(task.holdReason) || ['paused', 'blocked', 'needs-decision'].includes(task.state.toLowerCase());
+function taskGroup(task: FirstmateTask): 'waiting' | 'progress' | 'landed' {
+	if (isTerminal(task.state) || task.backlogSection === 'done' || task.backlogChecked && task.doneAt) {
+		return 'landed';
+	}
+	if (task.backlogSection === 'queued' || Boolean(task.holdReason) || ['paused', 'blocked', 'needs-decision'].includes(task.state.toLowerCase())) {
+		return 'waiting';
+	}
+	return 'progress';
 }
 
 function deckLabels(): DeckLabels {
@@ -301,7 +266,6 @@ function deckLabels(): DeckLabels {
 		progressDescription: vscode.l10n.t('Trabalho vivo nas cópias descartáveis dos agentes'),
 		landed: vscode.l10n.t('Aterrissadas recentemente'),
 		landedDescription: vscode.l10n.t('O que entrou na frota e o resultado registrado'),
-		task: vscode.l10n.t('Tarefa'),
 		project: vscode.l10n.t('Projeto'),
 		agent: vscode.l10n.t('Agente'),
 		doing: vscode.l10n.t('Fazendo'),

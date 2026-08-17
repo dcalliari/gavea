@@ -6,7 +6,7 @@
 	"publisher": "gavea",
 	"license": "MIT",
 	"engines": { "vscode": "^1.99.0" },
-	"activationEvents": ["onView:gavea.frota", "onCommand:gavea.frota.openDeck"],
+	"activationEvents": ["onStartupFinished", "onCommand:gavea.frota.openDeck"],
 	"main": "./out/extension",
 	"contributes": {
 		"configuration": {
@@ -20,8 +20,6 @@
 				}
 			}
 		},
-		"viewsContainers": { "activitybar": [{ "id": "gavea-frota", "title": "%container.title%", "icon": "./gavea-mark.svg" }] },
-		"views": { "gavea-frota": [{ "id": "gavea.frota", "name": "%view.title%" }] },
 		"commands": [
 			{ "command": "gavea.frota.openDeck", "title": "%command.openDeck%", "icon": "$(layout-centered)" },
 			{ "command": "gavea.frota.refresh", "title": "%command.refresh%", "icon": "$(refresh)" },
@@ -30,12 +28,6 @@
 			{ "command": "gavea.frota.openTaskSourceControl", "title": "%command.openTaskSourceControl%" }
 		],
 		"menus": {
-			"view/title": [{ "command": "gavea.frota.refresh", "when": "view == gavea.frota", "group": "navigation" }],
-			"view/item/context": [
-				{ "command": "gavea.frota.openTaskDiff", "when": "view == gavea.frota && viewItem == gavea.frota.task", "group": "inline@1" },
-				{ "command": "gavea.frota.openTaskWorktree", "when": "view == gavea.frota && viewItem == gavea.frota.task", "group": "inline@2" },
-				{ "command": "gavea.frota.openTaskSourceControl", "when": "view == gavea.frota && viewItem == gavea.frota.task", "group": "inline@3" }
-			],
 			"commandPalette": [
 				{ "command": "gavea.frota.openDeck" },
 				{ "command": "gavea.frota.refresh" },
